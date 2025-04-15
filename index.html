@@ -74,8 +74,8 @@ function matchRoute(routeToken) {
   for (let len = 3; len <= 4; len++) {
     let from = routeToken.slice(0, len);
     let to = routeToken.slice(len);
-    const fromMatch = aliasMap[from] || airports[from]?.code;
-    const toMatch = aliasMap[to] || airports[to]?.code;
+    const fromMatch = aliasMap[from] || (airports[from] ? from : null);
+    const toMatch = aliasMap[to] || (airports[to] ? to : null);
     if (fromMatch && toMatch) {
       return [fromMatch, toMatch];
     }
