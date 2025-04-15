@@ -41,8 +41,8 @@ function fetchCSV(url) {
 
 function init() {
   Promise.all([
-    fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/6a9f89864cf393313e17479cd9be67762664e312/airports.csv"),
-    fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/6a9f89864cf393313e17479cd9be67762664e312/statuses.csv")
+    fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/refs/heads/main/airports_cleaned.csv"),
+    fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/refs/heads/main/statuses_cleaned.csv")
   ]).then(([airportData, statusData]) => {
     airportData.forEach(a => {
       airports[a.code.toUpperCase()] = { city: capitalize(a.city), iata: a.iata };
