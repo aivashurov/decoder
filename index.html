@@ -120,7 +120,10 @@ function decode() {
       formattedDate = `${d}.${m}.${y}`;
     }
 
-    const routeToken = tokens.find(t => /^[A-ZА-Я]{6,8}$/.test(t)) || "";
+    const routeToken = tokens.find(t =>
+    t.length >= 6 && t.length <= 8 && /^[A-ZА-ЯЁ]{6,8}$/.test(t)
+    ) || "";
+
     [fromCode, toCode] = matchRoute(routeToken);
 
     const from = airports[fromCode?.toUpperCase()];
