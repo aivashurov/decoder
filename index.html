@@ -139,6 +139,12 @@ function decode() {
     if (dep.length === 4) dep = dep.slice(0,2) + ":" + dep.slice(2);
     if (arr.length === 4) arr = arr.slice(0,2) + ":" + arr.slice(2);
 
+    console.log("🧩 routeToken:", routeToken);
+    console.log("✅ fromCode:", fromCode, "→", airports[fromCode?.toUpperCase()]);
+    console.log("✅ toCode:", toCode, "→", airports[toCode?.toUpperCase()]);
+    console.log("✅ dep:", dep, "✅ arr:", arr);
+    console.log("✅ status:", statusToken, "→", statuses[statusToken?.toUpperCase()]);
+
     if (airline && flight && from && to && dep && arr && formattedDate) {
       output.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
     } else {
