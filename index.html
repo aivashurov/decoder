@@ -120,7 +120,7 @@ function decode() {
     const from = airports[fromCode];
     const to = airports[toCode];
 
-    const statusToken = tokens.find(t => statuses[t]);
+    const statusToken = tokens.find(t => statuses[t.toUpperCase()]);
     status = statuses[statusToken] || "";
 
     const times = tokens.filter(t => /^\d{4}$/.test(t));
