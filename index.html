@@ -72,10 +72,12 @@ function capitalize(str) {
 
 function matchRoute(routeToken) {
   for (let len = 3; len <= 4; len++) {
-    let fromCode = routeToken.slice(0, len);
-    let toCode = routeToken.slice(len);
-    if (aliasMap[fromCode] && aliasMap[toCode]) {
-      return [aliasMap[fromCode], aliasMap[toCode]];
+    let from = routeToken.slice(0, len);
+    let to = routeToken.slice(len);
+    const fromMatch = aliasMap[from] || airports[from]?.code;
+    const toMatch = aliasMap[to] || airports[to]?.code;
+    if (fromMatch && toMatch) {
+      return [fromMatch, toMatch];
     }
   }
   return [null, null];
