@@ -64,9 +64,13 @@ function init() {
 function capitalize(str) {
   return str
     ? str
-        .split(' ')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ')
+        .split(/([ -])/g)
+        .map(w =>
+          /[А-ЯA-ZЁ]/i.test(w.charAt(0))
+            ? w.charAt(0).toUpperCase() + w.slice(1)
+            : w
+        )
+        .join('')
     : '';
 }
 
