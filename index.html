@@ -144,9 +144,9 @@ function decode() {
     console.log("✅ toCode:", toCode, "→", airports[toCode?.toUpperCase()]);
     console.log("✅ dep:", dep, "✅ arr:", arr);
     console.log("✅ status:", statusToken, "→", statuses[statusToken?.toUpperCase()]);
-
     console.log("✅ dateToken:", dateToken);
     console.log("✅ formattedDate:", formattedDate);
+    
     if (airline && flight && from && to && dep && arr && formattedDate) {
       output.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
     } else {
