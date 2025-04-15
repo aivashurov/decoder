@@ -123,8 +123,8 @@ function decode() {
     const routeToken = tokens.find(t => /^[A-ZА-Я]{6,8}$/.test(t)) || "";
     [fromCode, toCode] = matchRoute(routeToken);
 
-    const from = airports[fromCode];
-    const to = airports[toCode];
+    const from = airports[fromCode?.toUpperCase()];
+    const to = airports[toCode?.toUpperCase()];
 
     const statusToken = tokens.find(t => statuses[t.toUpperCase()]);
     status = statuses[statusToken] || "";
