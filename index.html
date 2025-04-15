@@ -62,7 +62,12 @@ function init() {
 }
 
 function capitalize(str) {
-  return str ? str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : '';
+  return str
+    ? str
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ')
+    : '';
 }
 
 function matchRoute(routeToken) {
