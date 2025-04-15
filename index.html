@@ -124,6 +124,7 @@ function decode() {
     t.length >= 6 && t.length <= 8 && /^[A-ZА-ЯЁ]{6,8}$/.test(t)
     ) || "";
 
+
     [fromCode, toCode] = matchRoute(routeToken);
 
     const from = airports[fromCode?.toUpperCase()];
