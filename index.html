@@ -121,8 +121,9 @@ function decode() {
     }
 
     const routeToken = tokens.find(t =>
-    t.length >= 6 && t.length <= 8 && /^[A-ZА-ЯЁ]{6,8}$/.test(t)
-    ) || "";
+  t.length >= 6 && t.length <= 8 && /^[A-ZА-ЯЁ]{6,8}$/i.test(t)
+) || "";
+
 
 
     [fromCode, toCode] = matchRoute(routeToken);
