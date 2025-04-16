@@ -10,6 +10,7 @@
 
   body.dark-mode input,
   body.dark-mode #result,
+  body.dark-mode #result,
   body.dark-mode textarea {
     background-color: #1e1e1e;
     color: #fff;
@@ -35,6 +36,13 @@
     border: 1px solid #666;
     z-index: 1000;
   }
+
+<style>
+  body.transition, body.transition * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+</style>
+
 </style>
 
   <meta charset="UTF-8" />
@@ -44,10 +52,57 @@
     textarea { width: 100%; height: 150px; font-family: monospace; font-size: 14px; }
     button { padding: 10px 20px; font-size: 14px; margin-top: 10px; margin-right: 10px; }
     pre { background: #f0f0f0; padding: 15px; white-space: pre-wrap; border: 1px solid #ccc; }
-  </style>
+  
+<style>
+  body.transition, body.transition * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+</style>
+
+</style>
 </head>
 <body>
-<button class="dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
+<button id="theme-toggle" class="dark-toggle" onclick="toggleDarkMode()">
+  🌙 Темная тема
+</button>
+<script>
+function toggleDarkMode() {
+  document.body.classList.add('transition');
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  updateToggleIcon(isDark);
+  setTimeout(() => document.body.classList.remove('transition'), 300);
+}
+
+function updateToggleIcon(isDark) {
+  const btn = document.getElementById('theme-toggle');
+  btn.innerHTML = isDark ? '☀️ Светлая тема' : '🌙 Темная тема';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme');
+  const isDark = savedTheme === 'dark';
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+  }
+  updateToggleIcon(isDark);
+});
+</script>
+  🌙 Темная тема
+</button>
+<script>
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+});
+</script>
   🌙 Темная тема
 </button>
 
