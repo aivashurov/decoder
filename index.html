@@ -188,9 +188,12 @@ function decode() {
       formattedDate = `${d}.${m}.${y}`;
     }
 
-    const routeToken = tokens.find(t =>
-  t.length >= 6 && t.length <= 8 && /^[A-ZА-ЯЁ]{6,8}$/i.test(t.replace(/[^\wА-Яа-яA-Za-z]/g, ""))
-) || "";
+    let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
+    if (!routeToken) {
+    const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
+    if (idx >= 0) routeToken = tokens[idx] + tokens[idx + 1];
+    }
+
 
 
     [fromCode, toCode] = matchRoute(routeToken);
