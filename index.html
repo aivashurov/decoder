@@ -161,7 +161,8 @@ function decode() {
 
   for (const line of lines) {
     let tokens = line.trim().toUpperCase().split(/\s+/);
-    tokens = tokens.filter(t => !/^\d$/.test(t) && !/^[OE\*]$/.test(t));
+    const junkSymbols = ["*", ".", ","];
+    tokens = tokens.filter(t => !/^\d$/.test(t) && !junkSymbols.includes(t));
 
     let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "";
     let fromCode = "", toCode = "";
