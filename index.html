@@ -201,9 +201,13 @@ function decode() {
     const statusToken = tokens.find(t => statuses[t.toUpperCase()]);
     status = statuses[statusToken] || "";
 
-    const times = tokens.filter(t => /^\d{4}$/.test(t));
+    const times = tokens
+    .map(t => t.match(/\d{4}$/) ? t.match(/\d{4}$/)[0] : null)
+    .filter(Boolean);
+
     dep = times[times.length - 2] || "";
     arr = times[times.length - 1] || "";
+
     if (dep.length === 4) dep = dep.slice(0,2) + ":" + dep.slice(2);
     if (arr.length === 4) arr = arr.slice(0,2) + ":" + arr.slice(2);
 
