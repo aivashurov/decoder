@@ -187,7 +187,7 @@ function decode() {
     const cleaned = tokens.filter(t =>
       !/^[\d]{1,2}$/.test(t) &&
       !/^[\.*\/]+$/.test(t) &&
-      !["O", "E", "без", "изменений", "отменён", "предложен", "изменение"]
+      !["O", "E", "без", "изменений", "отменён", "отменен", "предложен", "изменение"]
         .includes(t.toUpperCase())
     );
 
@@ -205,7 +205,7 @@ function decode() {
       [airline, flight] = cleaned[0].split("-");
     }
 
-    let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/.test(t));
+    let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t));
     if (!routeToken) {
       const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
       if (idx >= 0) routeToken = tokens[idx] + tokens[idx + 1];
@@ -251,8 +251,14 @@ function decode() {
     }
     status = statuses[statusToken] || "";
 
-    if (airline && flight && from && to && formattedDate && dep && arr) {
-      const result = `${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`;
+    // Fallback for unknown from/to
+    const fromCity = from ? from.city : "❓";
+    const fromIATA = from ? from.iata : (fromCode || "❓");
+    const toCity = to ? to.city : "❓";
+    const toIATA = to ? to.iata : (toCode || "❓");
+
+    if (airline && flight && routeToken && formattedDate && dep && arr) {
+      const result = `${airline}-${flight} ${formattedDate}, ${fromCity} ${fromIATA} ${dep} — ${toCity} ${toIATA} ${arr}${status ? " — " + status : ""}`;
       results.push(result);
     } else {
       results.push("⚠️ Не удалось распознать строку: " + line);
