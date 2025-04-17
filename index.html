@@ -188,10 +188,13 @@ function decode() {
 
     let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "";
 
-// Умный разбор авиакомпании и номера рейса
+let airline = "", flight = "";
+
 const cleaned = tokens.filter(t =>
-  !/^\d{1,2}$/.test(t) &&
-  !["*", ".", "O", "E", "SU", "MO", "TU", "WE", "TH", "FR", "SA", "без", "изменений", "отменён", "предложен", "изменение"].includes(t.toUpperCase())
+  !/^[\d]{1,2}$/.test(t) &&            // мусор типа "2"
+  !/^[\.\*\/]$/.test(t) &&             // одиночные символы
+  !["O", "E", "SU", "MO", "TU", "WE", "TH", "FR", "SA", "без", "изменений", "отменён", "предложен", "изменение"]
+    .includes(t.toUpperCase())
 );
 
 for (let i = 0; i < cleaned.length - 1; i++) {
@@ -206,6 +209,11 @@ for (let i = 0; i < cleaned.length - 1; i++) {
     flight = maybeFlight;
     break;
   }
+}
+
+// Альтернатива: если слеплено
+if (!airline && cleaned.length && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(cleaned[0])) {
+  [airline, flight] = cleaned[0].split("-");
 }
 
 // Альтернатива: MS-729
