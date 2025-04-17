@@ -219,16 +219,16 @@ function decode() {
 }
 
 // Пытаемся отделить статус, если он приклеен к маршруту
-for (let statusCode in statuses) {
-    if (routeToken.endsWith(statusCode)) {
-      const pureRoute = routeToken.slice(0, -statusCode.length);
-      const from = pureRoute.slice(0, 3);
-      const to = pureRoute.slice(3);
+  for (let statusCode in statuses) {
+      if (routeToken.endsWith(statusCode)) {
+        const pureRoute = routeToken.slice(0, -statusCode.length);
+        const from = pureRoute.slice(0, 3);
+        const to = pureRoute.slice(3);
 
-    if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
-      tokens = tokens.map(t => t === routeToken ? pureRoute : t); // заменяем старый склеенный токен
-      tokens.push(statusCode);       // добавляем статус отдельно
-      routeToken = pureRoute;        // обновляем маршрут
+      if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
+      tokens = tokens.map(t => t === routeToken ? pureRoute : t); // заменяем склеенный токен
+      tokens.push(statusCode);  // статус — отдельным токеном
+      routeToken = pureRoute;
       break;
     }
   }
