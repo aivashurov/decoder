@@ -293,3 +293,30 @@ init();
 </script>
 </body>
 </html>
+let airline, flight;
+
+// Пытаемся найти подряд: код авиакомпании + номер рейса (с возможной литерой)
+for (let i = 0; i < tokens.length - 2; i++) {
+  const code = tokens[i];
+  const number = tokens[i + 1];
+  const letter = tokens[i + 2];
+
+  if (/^[A-Z0-9]{2}$/.test(code) && /^[0-9]{2,4}$/.test(number) && /^[A-Z]{1}$/.test(letter)) {
+    airline = code;
+    flight = number;
+    break;
+  }
+
+  // вариант: без литеры
+  if (/^[A-Z0-9]{2}$/.test(code) && /^[0-9]{2,4}$/.test(number)) {
+    airline = code;
+    flight = number;
+    break;
+  }
+}
+
+// Альтернатива: MS-729
+if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(tokens[0])) {
+  [airline, flight] = tokens[0].split("-");
+}
+
