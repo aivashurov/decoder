@@ -188,9 +188,10 @@ function decode() {
 
     let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "";
 
-const cleaned = tokens.filter(t => 
-  !/^[\d\.]+$/.test(t) && 
-  !["*", "O", "E", "SU", "MO", "без", "изменений", "отменён", "предложен", "изменение"].includes(t)
+// Умный разбор авиакомпании и номера рейса
+const cleaned = tokens.filter(t =>
+  !/^\d{1,2}$/.test(t) &&
+  !["*", ".", "O", "E", "SU", "MO", "TU", "WE", "TH", "FR", "SA"].includes(t.toUpperCase())
 );
 
 for (let i = 0; i < cleaned.length - 1; i++) {
