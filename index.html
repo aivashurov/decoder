@@ -224,8 +224,11 @@ function decode() {
     const from = airports[fromCode?.toUpperCase()];
     const to = airports[toCode?.toUpperCase()];
 
-    const statusToken = tokens.find(t => statuses[t.toUpperCase()]);
-    status = statuses[statusToken] || "";
+    const statusToken = tokens
+      .slice(2) 
+      .find(t => statuses[t.toUpperCase()]);
+
+    status = statuses[statusToken?.toUpperCase()] || "";
 
     const times = tokens
     .map(t => t.match(/\d{4}$/) ? t.match(/\d{4}$/)[0] : null)
