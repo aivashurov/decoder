@@ -263,9 +263,20 @@ if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(cleaned[0])) {
     const from = airports[fromCode?.toUpperCase()];
     const to = airports[toCode?.toUpperCase()];
 
-    const statusToken = tokens
-      .slice(2) 
-      .find(t => statuses[t.toUpperCase()]);
+    
+// Новый статусный парсинг
+const joined = tokens.join(" ");
+const allStatusCodes = Object.keys(statuses).sort((a, b) => b.length - a.length); // длиннее — раньше
+let statusToken = "";
+
+for (let code of allStatusCodes) {
+  const regex = new RegExp(`\b${code}\b`, "i");
+  if (regex.test(joined)) {
+    statusToken = code;
+    break;
+  }
+}
+
 
     status = statuses[statusToken?.toUpperCase()] || "";
 
