@@ -91,6 +91,22 @@ let airports = {};
 let aliasMap = {};
 let statuses = {};
 
+function isCyrillic(str) {
+  return /[А-ЯЁа-яё]/.test(str);
+}
+
+function normalizeCyrillic(str) {
+  return str
+    .replace(/C/g, "С")
+    .replace(/A/g, "А")
+    .replace(/E/g, "Е")
+    .replace(/O/g, "О")
+    .replace(/K/g, "К")
+    .replace(/M/g, "М")
+    .replace(/H/g, "Н")
+    .replace(/X/g, "Х");
+}
+
 function fetchCSV(url) {
   return fetch(url)
     .then(response => response.text())
@@ -115,13 +131,16 @@ function init() {
     airportData.forEach(a => {
       airports[a.code] = { city: capitalize(a.city), iata: a.iata };
       if (a.alias) {
-          a.alias.split(' ')
-          .map(alias => alias.trim())
-          .filter(alias => alias.length > 0)
-          .forEach(alias => {
-          aliasMap[alias.toUpperCase()] = a.code;
+        a.alias
+        .split(' ')
+        .map(alias => alias.trim())
+        .filter(alias => alias.length > 0)
+        .forEach(alias => {
+          const normalized = isCyrillic(alias) ? normalizeCyrillic(alias) : alias;
+          aliasMap[normalized.toUpperCase()] = a.code;
     });
 }
+
     });
     statusData.forEach(s => {
       statuses[s.code.toUpperCase()] = s.description;
