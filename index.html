@@ -218,17 +218,21 @@ function decode() {
       if (idx >= 0) routeToken = tokens[idx] + tokens[idx + 1];
 }
 
-// Пытаемся отделить статус, если он приклеен к маршруту
   for (let statusCode in statuses) {
-      if (routeToken.endsWith(statusCode)) {
-        const pureRoute = routeToken.slice(0, -statusCode.length);
-        const from = pureRoute.slice(0, 3);
-        const to = pureRoute.slice(3);
+    if (routeToken.endsWith(statusCode)) {
+      const pureRoute = routeToken.slice(0, -statusCode.length);
+      const from = pureRoute.slice(0, 3);
+      const to = pureRoute.slice(3);
 
-      if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
-      tokens = tokens.map(t => t === routeToken ? pureRoute : t); // заменяем склеенный токен
-      tokens.push(statusCode);  // статус — отдельным токеном
-      routeToken = pureRoute;
+    if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
+      tokens = tokens.map(t => {
+        if (t === routeToken) {
+          routeToken = pureRoute;
+          return pureRoute;
+        }
+        return t;
+      });
+      tokens.push(statusCode);
       break;
     }
   }
