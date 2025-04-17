@@ -115,10 +115,13 @@ function init() {
     airportData.forEach(a => {
       airports[a.code] = { city: capitalize(a.city), iata: a.iata };
       if (a.alias) {
-        a.alias.split(' ').forEach(alias => {
+          a.alias.split(' ')
+          .map(alias => alias.trim())
+          .filter(alias => alias.length > 0)
+          .forEach(alias => {
           aliasMap[alias.toUpperCase()] = a.code;
-        });
-      }
+    });
+}
     });
     statusData.forEach(s => {
       statuses[s.code.toUpperCase()] = s.description;
