@@ -212,12 +212,26 @@ function decode() {
     }
 
     let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
+
     if (!routeToken) {
-    const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
-    if (idx >= 0) routeToken = tokens[idx] + tokens[idx + 1];
+      const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
+      if (idx >= 0) routeToken = tokens[idx] + tokens[idx + 1];
+}
+
+// Пытаемся отделить статус, если он приклеен к маршруту
+for (let statusCode in statuses) {
+    if (routeToken.endsWith(statusCode)) {
+      const pureRoute = routeToken.slice(0, -statusCode.length);
+      const from = pureRoute.slice(0, 3);
+      const to = pureRoute.slice(3);
+
+    if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
+      tokens.push(statusCode);       // вставляем статус как отдельный токен
+      routeToken = pureRoute;        // заменяем маршрут на чистый
+      break;
     }
-
-
+  }
+}
 
     [fromCode, toCode] = matchRoute(isCyrillic(routeToken) ? normalizeCyrillic(routeToken) : routeToken);
 
