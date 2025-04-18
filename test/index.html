@@ -235,6 +235,18 @@ function extractDays(line) {
 
 
 function decode() {
+
+  // 💬 Проверка на служебные сообщения GDS
+  // 💬 Проверка на служебные сообщения GDS
+  if (serviceMatch) {
+    const type = serviceMatch[1].toUpperCase();
+    const content = serviceMatch[2];
+    const resultText = `💬 Служебное сообщение [${type}]: ${content}`;
+    output.push(resultText);
+    document.getElementById("extended-content").textContent = resultText;
+    return;
+  }
+
   const IS_TEST = true;
   const DEBUG = true;
   const junkSymbols = ["*", ".", ","];
@@ -363,6 +375,20 @@ for (let i = 0; i < cleaned.length - 1; i++) {
     
     if (airline && flight && from && to && dep && arr && formattedDate) {
       const daysText = extractDays(line); output.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
+
+  // 🧪 Расширенная отладочная информация
+  let extendedInfo = '';
+  extendedInfo += `📦 Исходная строка: ${line}\n`;
+  extendedInfo += `✈️ Авиакомпания: ${airline || '❓'}\n`;
+  extendedInfo += `🔢 Рейс: ${flight || '❓'}\n`;
+  extendedInfo += `📅 Дата: ${formattedDate || '❓'}\n`;
+  extendedInfo += `📍 Откуда: ${from?.city || '❓'} (${from?.iata || '??'})\n`;
+  extendedInfo += `📍 Куда: ${to?.city || '❓'} (${to?.iata || '??'})\n`;
+  extendedInfo += `⏰ Время: ${dep || '??:??'} → ${arr || '??:??'}\n`;
+  extendedInfo += `📌 Статус: ${status || '❓'}\n`;
+
+  document.getElementById("extended-content").textContent = extendedInfo;
+
     } else {
       output.push("⚠️ Не удалось распознать строку: " + line);
     }
