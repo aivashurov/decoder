@@ -56,6 +56,29 @@
 <style>
   #test-badge {
     position: fixed;
+    top: 55px;
+    right: 10px;
+    background: #ff5722;
+    color: white;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 9999;
+    border-radius: 3px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    opacity: 0.9;
+  }
+  body.dark-mode #test-badge {
+    background: #ff7043;
+    color: #fff;
+  }
+</style>
+<div id="test-badge">ТЕСТОВЫЙ РЕЖИМ</div>
+
+
+<style>
+  #test-badge {
+    position: fixed;
     top: 10px;
     right: 10px;
     background: #ff5722;
