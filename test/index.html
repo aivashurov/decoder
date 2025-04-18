@@ -5,37 +5,32 @@
   <title>Дешифровщик системных сообщений 2.0</title>
 
   <style>
-  /* ================== ТЁМНАЯ ТЕМА ================== */
+  /* ===== ТЁМНАЯ ТЕМА ===== */
   body.dark-mode { background-color: #121212; color: #eee; }
-  body.dark-mode input,
   body.dark-mode textarea,
   body.dark-mode pre#output,
   body.dark-mode pre#extended-output {
     background-color: #1e1e1e; color: #fff; border: 1px solid #444;
   }
   body.dark-mode button { background-color: #2c2c2c; color: #eee; border: 1px solid #555; }
-
   body.transition, body.transition * {
     transition: background-color .3s ease, color .3s ease, border-color .3s ease;
   }
-
   .dark-toggle {
     position: absolute; top: 10px; right: 10px;
-    font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 6px;
-    background: #333; color: #eee; border: 1px solid #666; z-index: 1000;
+    padding: 6px 12px; font-size: 14px; cursor: pointer;
+    background: #333; color: #eee; border: 1px solid #666; border-radius: 6px; z-index:1000;
   }
-  /* ============== ОСНОВНОЙ СТИЛЬ ============== */
+  /* ===== ОСНОВНЫЕ СТИЛИ ===== */
   body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
   textarea { width: 100%; height: 150px; font-family: monospace; font-size: 14px; }
-  button { padding: 10px 20px; font-size: 14px; margin-top:10px; margin-right:10px; }
-  pre#output { background: #f0f0f0; padding:15px; white-space: pre-wrap; border:1px solid #ccc; }
-  /* ============= EXTENDED OUTPUT ============= */
+  button { padding: 10px 20px; font-size: 14px; margin: 10px 5px 0 0; }
+  pre#output { background: #f0f0f0; padding: 15px; white-space: pre-wrap; border: 1px solid #ccc; }
   pre#extended-output {
-    background: #f9f9f9; padding:15px; white-space: pre-wrap;
-    border:1px solid #ccc; margin-top:10px; font-family: monospace; font-size:14px;
+    background: #f9f9f9; padding: 15px; white-space: pre-wrap;
+    border: 1px solid #ccc; margin-top: 10px; font-family: monospace; font-size:14px;
   }
   </style>
-
 </head>
 <body>
 
@@ -53,105 +48,98 @@
   <pre id="extended-output">Нет дополнительных сведений.</pre>
 
 <script>
-// ====== ТЕМА ======
+// ===== тема =====
 function toggleDarkMode(){
   document.body.classList.add('transition');
   const isDark = document.body.classList.toggle('dark-mode');
   localStorage.setItem('theme', isDark?'dark':'light');
-  updateToggleIcon(isDark);
+  document.getElementById('theme-toggle').innerHTML = isDark?'☀️ Светлая тема':'🌙 Тёмная тема';
   setTimeout(()=>document.body.classList.remove('transition'),300);
 }
-function updateToggleIcon(isDark){
-  document.getElementById('theme-toggle').innerHTML = 
-    isDark?'☀️ Светлая тема':'🌙 Тёмная тема';
-}
 window.addEventListener('DOMContentLoaded', ()=>{
-  const saved = localStorage.getItem('theme');
-  const dark = saved==='dark';
+  const dark = localStorage.getItem('theme')==='dark';
   if(dark) document.body.classList.add('dark-mode');
-  updateToggleIcon(dark);
+  document.getElementById('theme-toggle').innerHTML = dark?'☀️ Светлая тема':'🌙 Тёмная тема';
 });
 
-// ====== ДАННЫЕ ======
+// ===== данные =====
 let airports={}, aliasMap={}, statuses={};
 
-function isCyrillic(str){ return /[А-ЯЁа-яё]/.test(str); }
-function normalizeCyrillic(str){
-  return str.replace(/C/g,'С').replace(/A/g,'А')
-            .replace(/E/g,'Е').replace(/O/g,'О')
-            .replace(/K/g,'К').replace(/M/g,'М')
-            .replace(/H/g,'Н').replace(/X/g,'Х');
+function isCyrillic(s){ return /[А-ЯЁа-яё]/.test(s); }
+function normalizeCyrillic(s){
+  return s.replace(/C/g,'С').replace(/A/g,'А').replace(/E/g,'Е')
+          .replace(/O/g,'О').replace(/K/g,'К').replace(/M/g,'М')
+          .replace(/H/g,'Н').replace(/X/g,'Х');
 }
-
-// Простая загрузка CSV с GitHub
 function fetchCSV(url){
   return fetch(url).then(r=>r.text()).then(txt=>{
     const [hdr,...rows]=txt.trim().split(/\r?\n/);
-    const keys = hdr.split(',');
-    return rows.map(r=> {
+    const keys=hdr.split(',').map(k=>k.trim());
+    return rows.map(r=>{
       const vals=r.split(',');
-      const obj={};
-      keys.forEach((k,i)=>obj[k.trim()]=vals[i]?.trim()||"");
-      return obj;
+      const o={};
+      keys.forEach((k,i)=>o[k]=vals[i]?.trim()||"");
+      return o;
     });
   });
 }
-
 function init(){
   Promise.all([
     fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/refs/heads/main/airports_cleaned.csv"),
     fetchCSV("https://raw.githubusercontent.com/aivashurov/decoder/refs/heads/main/statuses_cleaned.csv")
-  ])
-  .then(([ap,st])=>{
+  ]).then(([ap,st])=>{
     ap.forEach(a=>{
       airports[a.code] = { city: capitalize(a.city), iata: a.iata };
       if(a.alias){
         a.alias.split(' ').filter(x=>x).forEach(alias=>{
-          const norm = isCyrillic(alias)?normalizeCyrillic(alias):alias;
-          aliasMap[norm.toUpperCase()] = a.code;
+          const norm=isCyrillic(alias)?normalizeCyrillic(alias):alias;
+          aliasMap[norm.toUpperCase()]=a.code;
         });
       }
     });
     st.forEach(s=>statuses[s.code.toUpperCase()]=s.description);
-  })
-  .catch(e=>document.getElementById("output").textContent="Ошибка загрузки данных: "+e);
+  }).catch(e=>{
+    document.getElementById("output").textContent = "Ошибка загрузки данных: "+e;
+  });
+}
+function capitalize(s){
+  return s? s.split(/([ -])/g).map(w=>
+    /[А-ЯЁA-Z]/i.test(w[0])? w[0].toUpperCase()+w.slice(1):w
+  ).join(''):"";
 }
 
-function capitalize(str){
-  return str?str.split(/([ -])/g)
-    .map(w=>/[А-ЯЁA-Z]/i.test(w[0])? w[0].toUpperCase()+w.slice(1):w)
-    .join(''):"";
-}
-
-// Ищем код аэропортов в строке (3 или 4 буквы)
+// ищем маршрут из 3-4 буквенных кодов
 function matchRoute(rt){
   for(let len=3;len<=4;len++){
     const f=rt.slice(0,len), t=rt.slice(len);
-    const fm=aliasMap[f]||((airports[f]?f:null)),
-          tm=aliasMap[t]||((airports[t]?t:null));
+    const fm=aliasMap[f]|| (airports[f]?f:null),
+          tm=aliasMap[t]|| (airports[t]?t:null);
     if(fm&&tm) return [fm,tm];
   }
   return [null,null];
 }
 
-// Предобработка: убираем точки, запятые, #, O*, одиночное E, склеиваем SU6321→SU-6321
+// убираем нумерацию, .,/,#, O*, E; склеиваем SU6321→SU-6321
 function preprocessGDS(line){
-  return line.replace(/[.,#]/g,'')
-             .replace(/\s+O\*/g,'')
-             .replace(/\s+E\b/g,'')
-             .replace(/\b([A-Z0-9]{2})(\d{3,4}[A-Z]?)\b/g,'$1-$2');
+  return line
+    .replace(/^\s*\d+\s*\.\s*/, '')   // 1 .  → убираем нумерацию
+    .replace(/[.,#\/]/g,'')           // .,/#,/
+    .replace(/\s+O\*/g,'')            // O*
+    .replace(/\s+E\b/g,'')            // lone E
+    .replace(/\b([A-Z0-9]{2})(\d{3,4}[A-Z]?)\b/g,'$1-$2');
 }
 
-// Вытащить дни полёта (MO/TU/…)
+// вытащить дни
 function extractDays(line){
   const dm={MO:"понедельник",TU:"вторник",WE:"среда",TH:"четверг",FR:"пятница",SA:"суббота",SU:"воскресенье"};
   const m=line.match(/\b(MO|TU|WE|TH|FR|SA|SU)(\/(MO|TU|WE|TH|FR|SA|SU))*\b/g);
-  return m?m[0].split('/').map(d=>dm[d]||d).join(', '):"";
+  return m? m[0].split('/').map(d=>dm[d]||d).join(', '):"";
 }
 
-// ====== ОСНОВНОЙ ПАРСЕР ======
+// ===== основной парсер =====
 function decode(){
-  const text = preprocessGDS(document.getElementById("input").value || "");
+  const rawText = document.getElementById("input").value || "";
+  const text = preprocessGDS(rawText);
   const lines = text.split(/\n+/);
   const main = [], ext = [];
 
@@ -159,24 +147,23 @@ function decode(){
     const line = raw.trim();
     if(!line) continue;
 
-    // 1) Служебные сообщения GDS
+    // служебные сообщения GDS
     const svc = line.match(/^(SSR|FLIFO|OSI)\s+(.*)$/i);
     if(svc){
-      const type = svc[1].toUpperCase(), content=svc[2];
-      ext.push(`💬 Служебное сообщение [${type}]: ${content}`);
-      main.push(line); 
+      ext.push(`💬 Служебное сообщение [${svc[1].toUpperCase()}]: ${svc[2]}`);
+      main.push(line);
       continue;
     }
 
-    // 2) Разделяем на токены, убираем мусор
+    // токены и фильтрация мусора
     let tokens = line.toUpperCase().split(/\s+/);
-    const junk = ["*",".",","];
-    tokens = tokens.filter(t=>!/^\d$/.test(t)&&!junk.includes(t));
+    const junk = ["*",".",",","/","#"];
+    tokens = tokens.filter(t=>!/^[0-9]$/.test(t) && !junk.includes(t));
 
-    // 3) Ищем airline-флайт
+    // airline/flight
     let airline="", flight="";
     for(let i=0;i<tokens.length-1;i++){
-      if(/^[A-Z0-9]{2}$/.test(tokens[i])&&/^[0-9]{2,4}[A-Z]?$/.test(tokens[i+1])){
+      if(/^[A-Z0-9]{2}$/.test(tokens[i]) && /^[0-9]{2,4}[A-Z]?$/.test(tokens[i+1])){
         airline=tokens[i]; flight=tokens[i+1]; break;
       }
     }
@@ -184,12 +171,13 @@ function decode(){
       [airline,flight]=tokens[0].split("-");
     }
 
-    // 4) Дата
-    let dateToken = tokens.find(t=>/^\d{2}[A-ZА-ЯЁ]{3}(\d{2})?$/.test(t))||"";
-    const months={ЯНВ:"01",ФЕВ:"02",МАР:"03",АПР:"04",МАЙ:"05",ИЮН:"06",
-      ИЮЛ:"07",АВГ:"08",СЕН:"09",ОКТ:"10",НОЯ:"11",ДЕК:"12",
-      JAN:"01",FEB:"02",MAR:"03",APR:"04",MAY:"05",JUN:"06",JUL:"07",AUG:"08",SEP:"09",OCT:"10",NOV:"11",DEC:"12"};
-    let formattedDate="⚠️";
+    // дата
+    let dateToken = tokens.find(t=>/^\d{2}[A-ZА-ЯЁ]{3}(\d{2})?$/.test(t))||"",
+        formattedDate="⚠️";
+    const months={"ЯНВ":"01","ФЕВ":"02","МАР":"03","АПР":"04","МАЙ":"05","ИЮН":"06",
+                  "ИЮЛ":"07","АВГ":"08","СЕН":"09","ОКТ":"10","НОЯ":"11","ДЕК":"12",
+                  "JAN":"01","FEB":"02","MAR":"03","APR":"04","MAY":"05","JUN":"06",
+                  "JUL":"07","AUG":"08","SEP":"09","OCT":"10","NOV":"11","DEC":"12"};
     if(dateToken){
       const d=dateToken.slice(0,2),
             m=months[dateToken.slice(2,5).toUpperCase()]||"??",
@@ -197,13 +185,12 @@ function decode(){
       formattedDate=`${d}.${m}.${y}`;
     }
 
-    // 5) Маршрут
+    // маршрут + вшитый статус
     let routeToken = tokens.find(t=>/^[A-ZА-ЯЁ]{6,8}$/i.test(t))||"";
     if(!routeToken){
-      const idx=tokens.findIndex((t,i)=>aliasMap[t]&&aliasMap[tokens[i+1]]);
+      const idx=tokens.findIndex((t,i)=>aliasMap[t]&&tokens[i+1]);
       if(idx>=0) routeToken=tokens[idx]+tokens[idx+1];
     }
-    // status приклеенный к маршруту
     for(let sc in statuses){
       if(routeToken.endsWith(sc)){
         const pr=routeToken.slice(0,-sc.length),
@@ -220,21 +207,19 @@ function decode(){
     const [fromCode,toCode] = matchRoute(isCyrillic(routeToken)?normalizeCyrillic(routeToken):routeToken);
     const from = airports[fromCode], to = airports[toCode];
 
-    // 6) Статус
+    // статус
     const statusToken = tokens.slice(2).find(t=>statuses[t]);
     const status = statuses[statusToken]||"";
 
-    // 7) Время
+    // время
     const times = tokens.map(t=>t.match(/^\d{4}$/)?t:null).filter(Boolean);
     let dep=times[times.length-2]||"", arr=times[times.length-1]||"";
     if(dep.length===4) dep=dep.slice(0,2)+":"+dep.slice(2);
     if(arr.length===4) arr=arr.slice(0,2)+":"+arr.slice(2);
 
-    // 8) Сборка вывода
+    // сборка
     if(airline&&flight&&from&&to&&dep&&arr&&formattedDate){
-      // основной
       main.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status?" — "+status:""}`);
-      // extended
       ext.push(
         `Исходная строка: ${line}`,
         ` → Авиакомпания: ${airline}`,
@@ -254,7 +239,7 @@ function decode(){
   document.getElementById("extended-output").textContent = ext.join("\n");
 }
 
-// ====== КНОПКИ ======
+// ===== кнопки =====
 function copyResult(){
   navigator.clipboard.writeText(document.getElementById("output").textContent);
 }
