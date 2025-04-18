@@ -1,47 +1,76 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <title>Decoder Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    textarea { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+    button { padding: 8px 16px; }
+    #test-badge {
+      position: fixed; top: 85px; right: 10px;
+      background: #ff5722; color: #fff; padding: 5px 10px;
+      font-size: 12px; font-weight: bold; border-radius: 3px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2); opacity: 0.9;
+      z-index: 9999;
+    }
+    #extended-output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <textarea id="input" rows="10" cols="50" placeholder="Вставьте сообщение..."></textarea>
-  <button onclick="decode()">Расшифровать</button>
-  <textarea id="result" rows="10" cols="50" readonly></textarea>
+  <div id="test-badge">ТЕСТОВЫЙ РЕЖИМ</div>
 
-  <div id="extended-output" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; font-size: 13px; white-space: pre-wrap; color: #333;">
+  <h2>Системное сообщение</h2>
+  <textarea id="input" rows="6" placeholder="Вставьте здесь одно или несколько сообщений (по строкам)"></textarea>
+  <button onclick="decode()">Расшифровать</button>
+  <textarea id="result" rows="6" readonly placeholder="Здесь появится основной результат"></textarea>
+
+  <div id="extended-output">
     <strong>🔍 Расширенная расшифровка (тест):</strong>
-    <div id="extended-content"></div>
+    <div id="extended-content">Нет дополнительных сведений.</div>
   </div>
 
   <script>
-    function decode() {
-      const input = document.getElementById("input").value;
-      const lines = input.split("\n");
-      const output = [];
+  function decode() {
+    const input = document.getElementById("input").value;
+    const lines = input.split("\n");
+    const output = [];
+    let extended = "";
 
-      lines.forEach(line => {
-        if (!line.trim()) return;
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i];
+      const line = raw.trim();
+      if (!line) continue;
 
-        // 💬 GDS service message support (SSR / FLIFO / OSI)
-        const serviceMatch = line.match(/^(SSR|FLIFO|OSI)\s+(.*?)\s*$/i);
-        if (serviceMatch) {
-          const type = serviceMatch[1].toUpperCase();
-          const content = serviceMatch[2];
-          const resultText = `💬 Служебное сообщение [${type}]: ${content}`;
-          document.getElementById("extended-content").textContent = resultText;
-          return;
-        }
-
-        output.push(`${line}`);
-      });
-
-      document.getElementById("result").value = output.join("\n");
-      if (!document.getElementById("extended-content").textContent) {
-        document.getElementById("extended-content").textContent = "Нет дополнительных сведений.";
+      // GDS service message (SSR / FLIFO / OSI)
+      const svc = line.match(/^(SSR|FLIFO|OSI)\s+(.*)$/i);
+      if (svc) {
+        const type = svc[1].toUpperCase();
+        const content = svc[2];
+        extended += `💬 Служебное сообщение [${type}]: ${content}\n`;
+        continue;
       }
+
+      // *** Здесь будет основной парсинг ***
+      // Пока просто копируем строку в основной результат:
+      output.push(line);
     }
+
+    // Выводим основной результат
+    document.getElementById("result").value = output.join("\n");
+
+    // Выводим расширенную информацию
+    const extNode = document.getElementById("extended-content");
+    extNode.textContent = extended.trim() || "Нет дополнительных сведений.";
+  }
   </script>
 </body>
 </html>
