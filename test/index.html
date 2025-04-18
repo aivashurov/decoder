@@ -237,6 +237,16 @@ function extractDays(line) {
 function decode() {
 
   // 💬 Проверка на служебные сообщения GDS
+  const serviceMatch = line.match(/^(SSR|FLIFO|OSI)\\s+(.*?)\\s*$/i);
+  if (serviceMatch) {
+    const type = serviceMatch[1].toUpperCase();
+    const content = serviceMatch[2];
+    const resultText = `💬 Служебное сообщение [${type}]: ${content}`;
+    document.getElementById("extended-content").textContent = resultText;
+    return;
+  }
+
+
   // 💬 Проверка на служебные сообщения GDS
   if (serviceMatch) {
     const type = serviceMatch[1].toUpperCase();
