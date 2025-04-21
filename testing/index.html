@@ -557,7 +557,42 @@ if (!airline && !flight) {
     console.log("✅ flight:", flight);
     
     if (airline && flight && from && to && dep && arr && formattedDate) {
-      const daysText = extractDays(line); output.push(`${rawAirline}-${rawFlight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
+      const daysText = extractDays(line); 
+
+output.push(`${rawAirline}-${rawFlight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
+
+(() => {
+  const cardElem = document.createElement("div");
+  cardElem.className = "result-card";
+
+  const routeElem = document.createElement("div");
+  routeElem.className = "route";
+  routeElem.innerHTML = `
+    <span class="city">${from.city}</span> <span class="iata">${from.iata}</span>
+    <span class="time">${dep}</span>
+    →
+    <span class="city">${to.city}</span> <span class="iata">${to.iata}</span>
+    <span class="time">${arr}</span>
+  `;
+
+  const metaElem = document.createElement("div");
+  metaElem.className = "flight-meta";
+  const statusClass = status.includes("отмен") ? "danger" :
+                      status.includes("измен") || status.includes("замен") ? "warning" :
+                      "ok";
+
+  metaElem.innerHTML = `
+    <span class="flight">${rawAirline}-${rawFlight}</span> ·
+    <span class="date">${formattedDate}</span> ·
+    <span class="status ${statusClass}">${status}</span>
+  `;
+
+  cardElem.appendChild(routeElem);
+  cardElem.appendChild(metaElem);
+  document.getElementById("output").appendChild(cardElem);
+})();
+
+
 
 const card = document.createElement("div");
 card.className = "result-card";
