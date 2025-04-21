@@ -226,8 +226,7 @@ function decode() {
     let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "", rawAirline = "", rawFlight = "";
 
 const cleaned = tokens.filter(t =>
-  !/^\d{1,2}$/.test(t) &&
-  !["*", ".", "O", "E", "SU", "MO", "TU", "WE", "TH", "FR", "SA", "без", "изменений", "отменён", "предложен", "изменение"].includes(t.toUpperCase())
+  !["O", "E", "Q", "Y", "T", "*", "B"].includes(t) || /^[0-9]{1,4}$/.test(t)
 );
 
 
