@@ -269,6 +269,17 @@ if (!airline && !flight) {
     }
 
     let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
+if (!routeToken) {
+  const idx = tokens.findIndex((t, i) =>
+    i + 1 < tokens.length &&
+    (aliasMap[t] || airports[t]) &&
+    (aliasMap[tokens[i + 1]] || airports[tokens[i + 1]])
+  );
+  if (idx >= 0) {
+    routeToken = tokens[idx] + tokens[idx + 1];
+  }
+}
+
 
     if (!routeToken) {
       const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
