@@ -270,13 +270,15 @@ if (!airline && !flight) {
 
     let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
 if (!routeToken) {
-  const idx = tokens.findIndex((t, i) =>
-    i + 1 < tokens.length &&
-    (aliasMap[t] || airports[t]) &&
-    (aliasMap[tokens[i + 1]] || airports[tokens[i + 1]])
-  );
-  if (idx >= 0) {
-    routeToken = tokens[idx] + tokens[idx + 1];
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const first = normalizeCyrillic(tokens[i].toUpperCase());
+    const second = normalizeCyrillic(tokens[i + 1].toUpperCase());
+    const fromCandidate = aliasMap[first] || (airports[first] ? first : null);
+    const toCandidate = aliasMap[second] || (airports[second] ? second : null);
+    if (fromCandidate && toCandidate) {
+      routeToken = first + second;
+      break;
+    }
   }
 }
 
