@@ -250,6 +250,16 @@ if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(cleaned[0])) {
     }
 
     let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
+if (!routeToken) {
+  const idx = tokens.findIndex((t, i) =>
+    (aliasMap[t] || airports[t]) && (aliasMap[tokens[i + 1]] || airports[tokens[i + 1]])
+  );
+  if (idx >= 0) {
+    console.log("🔎 Fallback routeToken match:", tokens[idx], tokens[idx + 1]);
+    routeToken = tokens[idx] + tokens[idx + 1];
+  }
+}
+
 
     if (!routeToken) {
       const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
