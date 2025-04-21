@@ -556,7 +556,6 @@ if (!airline && !flight) {
     
     if (airline && flight && from && to && dep && arr && formattedDate) {
       const daysText = extractDays(line); output.push(`${rawAirline}-${rawFlight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
-
 (() => {
   const cardElem = document.createElement("div");
   cardElem.className = "result-card";
