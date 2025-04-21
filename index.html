@@ -95,6 +95,7 @@ function isCyrillic(str) {
   return /[А-ЯЁа-яё]/.test(str);
 }
 
+
 function normalizeCyrillic(str) {
   return str
     .replace(/C/g, "С")
@@ -104,8 +105,23 @@ function normalizeCyrillic(str) {
     .replace(/K/g, "К")
     .replace(/M/g, "М")
     .replace(/H/g, "Н")
-    .replace(/X/g, "Х");
+    .replace(/X/g, "Х")
+    // Cyrillic to Latin (for flight/airline normalization)
+    .replace(/А/g, "A")
+    .replace(/В/g, "B")
+    .replace(/Е/g, "E")
+    .replace(/К/g, "K")
+    .replace(/М/g, "M")
+    .replace(/Н/g, "H")
+    .replace(/О/g, "O")
+    .replace(/Р/g, "P")
+    .replace(/С/g, "C")
+    .replace(/Т/g, "T")
+    .replace(/У/g, "Y")
+    .replace(/Х/g, "X")
+    .replace(/Ф/g, "F");
 }
+
 
 function fetchCSV(url) {
   return fetch(url)
