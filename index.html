@@ -207,7 +207,7 @@ function decode() {
     const junkSymbols = ["*", ".", ","];
     tokens = tokens.filter(t => !/^\d$/.test(t) && !junkSymbols.includes(t));
 
-    let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "", rawAirline = "", rawFlight = "";
+    let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "";
 
 const cleaned = tokens.filter(t =>
   !/^\d{1,2}$/.test(t) &&
@@ -310,7 +310,7 @@ if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(cleaned[0])) {
     console.log("✅ flight:", flight);
     
     if (airline && flight && from && to && dep && arr && formattedDate) {
-      const daysText = extractDays(line); output.push(`${rawAirline}-${rawFlight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
+      const daysText = extractDays(line); output.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
     } else {
       output.push("⚠️ Не удалось распознать строку: " + line);
     }
