@@ -257,21 +257,14 @@ if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(token0)) {
 }
 
   for (let statusCode in statuses) {
-    if (routeToken.endsWith(statusCode)) {
-      const pureRoute = routeToken.slice(0, -statusCode.length);
-      const from = pureRoute.slice(0, 3);
-      const to = pureRoute.slice(3);
-
+  if (routeToken.endsWith(statusCode)) {
+    const pureRoute = routeToken.slice(0, -statusCode.length);
+    const from = pureRoute.slice(0, 3);
+    const to = pureRoute.slice(3);
     if ((aliasMap[from] || airports[from]) && (aliasMap[to] || airports[to])) {
-      tokens = tokens.map(t => {
-        if (t === routeToken) {
-          routeToken = pureRoute;
-          return pureRoute;
-        }
-        return t;
-      });
+      routeToken = pureRoute;
+      tokens = tokens.map(t => t === pureRoute + statusCode ? pureRoute : t);
       tokens.push(statusCode);
-    statusToken = statusCode;
       break;
     }
   }
