@@ -207,7 +207,7 @@ function decode() {
     const junkSymbols = ["*", ".", ","];
     tokens = tokens.filter(t => !/^\d$/.test(t) && !junkSymbols.includes(t));
 
-    let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "";
+    let airline = "", flight = "", dateToken = "", dep = "", arr = "", status = "", rawAirline = "", rawFlight = "";
 
 const cleaned = tokens.filter(t =>
   !/^\d{1,2}$/.test(t) &&
@@ -250,16 +250,6 @@ if (!airline && /^[A-Z0-9]{2}-[0-9]{2,4}$/.test(cleaned[0])) {
     }
 
     let routeToken = tokens.find(t => /^[A-ZА-ЯЁ]{6,8}$/i.test(t)) || "";
-if (!routeToken) {
-  const idx = tokens.findIndex((t, i) =>
-    (aliasMap[t] || airports[t]) && (aliasMap[tokens[i + 1]] || airports[tokens[i + 1]])
-  );
-  if (idx >= 0) {
-    console.log("🔎 Fallback routeToken match:", tokens[idx], tokens[idx + 1]);
-    routeToken = tokens[idx] + tokens[idx + 1];
-  }
-}
-
 
     if (!routeToken) {
       const idx = tokens.findIndex((t, i) => aliasMap[t] && aliasMap[tokens[i + 1]]);
@@ -320,7 +310,7 @@ if (!routeToken) {
     console.log("✅ flight:", flight);
     
     if (airline && flight && from && to && dep && arr && formattedDate) {
-      const daysText = extractDays(line); output.push(`${airline}-${flight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
+      const daysText = extractDays(line); output.push(`${rawAirline}-${rawFlight} ${formattedDate}, ${from.city} ${from.iata} ${dep} — ${to.city} ${to.iata} ${arr}${status ? " — " + status : ""}`);
     } else {
       output.push("⚠️ Не удалось распознать строку: " + line);
     }
