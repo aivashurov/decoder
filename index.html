@@ -95,7 +95,6 @@ function isCyrillic(str) {
   return /[А-ЯЁа-яё]/.test(str);
 }
 
-
 function normalizeCyrillic(str) {
   return str
     .replace(/C/g, "С")
@@ -105,23 +104,8 @@ function normalizeCyrillic(str) {
     .replace(/K/g, "К")
     .replace(/M/g, "М")
     .replace(/H/g, "Н")
-    .replace(/X/g, "Х")
-    // Cyrillic to Latin (for flight/airline normalization)
-    .replace(/А/g, "A")
-    .replace(/В/g, "B")
-    .replace(/Е/g, "E")
-    .replace(/К/g, "K")
-    .replace(/М/g, "M")
-    .replace(/Н/g, "H")
-    .replace(/О/g, "O")
-    .replace(/Р/g, "P")
-    .replace(/С/g, "C")
-    .replace(/Т/g, "T")
-    .replace(/У/g, "Y")
-    .replace(/Х/g, "X")
-    .replace(/Ф/g, "F");
+    .replace(/X/g, "Х");
 }
-
 
 function fetchCSV(url) {
   return fetch(url)
@@ -271,6 +255,7 @@ if (!routeToken) {
     (aliasMap[t] || airports[t]) && (aliasMap[tokens[i + 1]] || airports[tokens[i + 1]])
   );
   if (idx >= 0) {
+    console.log("🔎 Fallback routeToken match:", tokens[idx], tokens[idx + 1]);
     routeToken = tokens[idx] + tokens[idx + 1];
   }
 }
