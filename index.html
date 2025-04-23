@@ -153,19 +153,7 @@ function init() {
         .filter(alias => alias.length > 0)
         .forEach(alias => {
           const normalized = isCyrillic(alias) ? normalizeCyrillic(alias) : alias;
-          
-    const aliasNormalized = normalizeCyrillic(alias);
-    const upperAlias = aliasNormalized.toUpperCase();
-    const upperCode = a.code.toUpperCase();
-
-    // Skip if alias matches IATA code or would overwrite real airport
-    if (
-      upperAlias !== upperCode &&
-      !(airports[upperAlias] && upperAlias !== upperCode)
-    ) {
-      aliasMap[upperAlias] = a.code;
-    }
-
+          aliasMap[normalized.toUpperCase()] = a.code;
     });
 }
 
