@@ -153,9 +153,14 @@ function init() {
         .filter(alias => alias.length > 0)
         .forEach(alias => {
           const normalized = isCyrillic(alias) ? normalizeCyrillic(alias) : alias;
-          if (normalized.toUpperCase() !== a.code.toUpperCase()) {
-      aliasMap[normalized.toUpperCase()] = a.code;
+          
+    const aliasNormalized = normalizeCyrillic(alias);
+    const upperAlias = aliasNormalized.toUpperCase();
+    const upperCode = a.code.toUpperCase();
+    if (upperAlias !== upperCode) {
+      aliasMap[upperAlias] = a.code;
     }
+
     });
 }
 
