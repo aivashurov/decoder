@@ -5,9 +5,11 @@
   <title>Дешифровщик системных сообщений 2.0</title>
   <style>
     body.dark-mode { background-color: #121212; color: #eee; }
-    body.dark-mode textarea, body.dark-mode pre#output { background-color: #1e1e1e; color: #fff; border: 1px solid #444; }
+    body.dark-mode textarea,
+    body.dark-mode pre#output { background-color: #1e1e1e; color: #fff; border: 1px solid #444; }
     body.dark-mode button { background-color: #2c2c2c; color: #eee; border: 1px solid #555; }
-    body.transition, body.transition * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+    body.transition,
+    body.transition * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
     .dark-toggle { position: absolute; top: 10px; right: 10px; cursor: pointer; background: #333; color: #eee; border: 1px solid #666; padding: 6px; border-radius: 6px; }
     body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     textarea { width: 100%; height: 150px; font-family: monospace; font-size: 14px; }
@@ -19,10 +21,12 @@
   <button id="theme-toggle" class="dark-toggle" onclick="toggleDarkMode()">🌙 Тёмная тема</button>
   <script>
     function toggleDarkMode() {
+      document.body.classList.add('transition');
       document.body.classList.toggle('dark-mode');
       const btn = document.getElementById('theme-toggle');
       btn.textContent = document.body.classList.contains('dark-mode') ? '☀️ Светлая тема' : '🌙 Тёмная тема';
       localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      setTimeout(() => document.body.classList.remove('transition'), 300);
     }
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('theme') === 'dark') {
