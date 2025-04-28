@@ -2,11 +2,18 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Дешифровщик системных сообщений 2.1</title>
+  <title>Дешифровщик системных сообщений 2.0</title>
   <style>
     /* Общие стили */
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #f0f2f5; color: #333; }
+    body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+    /* убран фон светлой темы */
+    color: #333;
+}
     h2 { margin-top: 0; }
     textarea, pre, .refresh-info {
       width: 100%;
@@ -60,7 +67,7 @@
     });
   </script>
 
-  <h2>Дешифровщик системных сообщений 2.1</h2>
+  <h2>Дешифровщик системных сообщений 2.0</h2>
   <textarea id="input" placeholder="Вставь системное сообщение…"></textarea><br/>
   <button class="action-btn" onclick="decode()">Расшифровать</button>
   <button class="action-btn" onclick="copyResult()">Скопировать</button>
@@ -70,8 +77,8 @@
   <div class="refresh-info">
     <p><strong>Ошибка при расшифровке?</strong> Попробуй обновить страницу:</p>
     <ul>
-      <li><strong>Windows:</strong> обычное обновление — <kbd>Ctrl+R</kbd>; «жёсткое» — <kbd>Ctrl+F5</kbd> или <kbd>Ctrl+Shift+R</kbd>.</li>
-      <li><strong>macOS:</strong> обычное обновление — <kbd>⌘+R</kbd>; «жёсткое» — <kbd>⌘+Shift+R</kbd>.</li>
+      <li><strong>Windows:</strong> обычное обновление — <kbd>Ctrl+R</kbd>; жесткое — <kbd>Ctrl+F5</kbd> или <kbd>Ctrl+Shift+R</kbd>.</li>
+      <li><strong>macOS:</strong> обычное обновление — <kbd>⌘+R</kbd>; жесткое — <kbd>⌘+Shift+R</kbd>.</li>
     </ul>
     <p><em>Комбинации работают в Chrome, Firefox, Edge и Safari.</em></p>
   </div>
