@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Дешифровщик системных сообщений 2.0</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Дешифровщик системных сообщений 2.0</title>
+<style>
     /* Общие стили */
     *, *::before, *::after { box-sizing: border-box; }
     body {
@@ -73,9 +74,8 @@
   </style>
 </head>
 <body>
-  <button id="theme-toggle" class="dark-toggle" onclick="toggleDarkMode()">🌙 Тёмная тема</button>
-
-  <script>
+<button class="dark-toggle" id="theme-toggle" onclick="toggleDarkMode()">🌙 Тёмная тема</button>
+<script>
     function toggleDarkMode() {
       document.body.classList.add('transition');
       document.body.classList.toggle('dark-mode');
@@ -91,24 +91,26 @@
       }
     });
   </script>
+<h2>Дешифровщик системных сообщений 2.0</h2>
+<div style="margin: 10px 0;">
+<label><input checked="" name="mode" onchange="changeMode(this.value)" type="radio" value="gds"/> GDS</label>
+<label><input name="mode" onchange="changeMode(this.value)" type="radio" value="ndc"/> NDC</label>
+</div>
 
-  <h2>Дешифровщик системных сообщений 2.0</h2>
-  <textarea id="input" placeholder="Вставь системное сообщение"></textarea><br/>
-  <button class="action-btn" onclick="decode()">Расшифровать</button>
-  <button class="action-btn" onclick="copyResult()">Скопировать</button>
-  <button class="action-btn" onclick="clearAll()">Очистить</button>
-  <pre id="output"></pre>
-
-  <div class="refresh-info">
-    <p><strong>Ошибка при расшифровке?</strong> Попробуй обновить страницу:</p>
-    <ul>
-      <li><strong>Windows:</strong> <kbd>Ctrl+R</kbd> / <kbd>Ctrl+F5</kbd></li>
-      <li><strong>macOS:</strong> <kbd>⌘+R</kbd> / <kbd>⌘+Shift+R</kbd></li>
-    </ul>
-    <p><em>Работает в Chrome, Firefox, Edge и Safari.</em></p>
-  </div>
-
-  <script>
+<textarea id="input" placeholder="Вставь системное сообщение"></textarea><br/>
+<button class="action-btn" onclick="decode()">Расшифровать</button>
+<button class="action-btn" onclick="copyResult()">Скопировать</button>
+<button class="action-btn" onclick="clearAll()">Очистить</button>
+<pre id="output"></pre>
+<div class="refresh-info">
+<p><strong>Ошибка при расшифровке?</strong> Попробуй обновить страницу:</p>
+<ul>
+<li><strong>Windows:</strong> <kbd>Ctrl+R</kbd> / <kbd>Ctrl+F5</kbd></li>
+<li><strong>macOS:</strong> <kbd>⌘+R</kbd> / <kbd>⌘+Shift+R</kbd></li>
+</ul>
+<p><em>Работает в Chrome, Firefox, Edge и Safari.</em></p>
+</div>
+<script>
     let airports = {}, aliasMap = {}, statuses = {};
 
     function isCyrillic(s) { return /[А-ЯЁа-яё]/.test(s); }
@@ -233,16 +235,18 @@
       return null;
     }
 
-    // обновлённая findStatus
-    function findStatus(tokens, airlineCode) {
-      const norm = tokens
-        .map(t => t.toUpperCase().replace(/[_\s-]/g, ''))
-        .filter(code => code !== airlineCode && statuses[code])
-        .filter(code => /\d/.test(code));
-      if (!norm.length) return '';
-      norm.sort((a, b) => b.length - a.length);
-      return statuses[norm[0]];
-    }
+    // обновлённая findStatus без фильтра по цифрам
+function findStatus(tokens, airlineCode) {
+  const norm = tokens
+    .map(t => t.toUpperCase().replace(/[_\s-]/g, ''))
+    // выбираем только те токены, что есть в statuses и не равны коду авиакомпании
+    .filter(code => code !== airlineCode && statuses[code]);
+  if (!norm.length) return '';
+  // если несколько, берём самый длинный (чтобы не обрезать, например, OK25 vs OK)
+  norm.sort((a, b) => b.length - a.length);
+  return statuses[norm[0]];
+}
+
 
     function findTimes(tokens, dt) {
       const year = dt ? dt.formatted.split('.')[2] : '';
@@ -306,6 +310,110 @@
 
     // инициализируем данные
     init();
-  </script>
+  
+
+
+let decodeMode = 'gds';
+function changeMode(mode) {
+  decodeMode = mode;
+}
+const originalDecode = decode;
+decode = function() {
+  const raw = input.value.trim();
+  if (decodeMode === 'ndc') return decodeNDC(raw);
+  originalDecode();
+};
+function decodeNDC(text) {
+  const blocks = text.split(/\n{2,}/);
+  const out = [];
+
+  // для преобразования “25 авг.” → “dd.MM.yyyy”
+  const monthMap = { 'янв':1,'фев':2,'мар':3,'апр':4,'май':5,'июн':6,'июл':7,'авг':8,'сен':9,'окт':10,'ноя':11,'дек':12 };
+  const currentYear = new Date().getFullYear();
+
+  // регэксы
+  const timeRx     = /^\d{2}:\d{2}$/;
+  const iataRx     = /^[A-Z]{3}$/;    // аэропорт
+  const statusRx   = /^[A-Z]{2}$/;    // статус
+  const dateRx     = /(\d{1,2})\s*([А-Яа-я]{3})\.?/;
+  const dayShiftRx = /\+(\d+)\s*дн/i;
+
+  for (const block of blocks) {
+    const lines  = block.trim().split(/\n/).map(l=>l.trim()).filter(Boolean);
+    const tokens = lines.flatMap(l=>l.split(/\s+/));
+
+    // 1) номер рейса и код авиакомпании
+    const [airline, flight] = lines[0].split(/\s+/);
+
+    // 2) дата (если есть)
+    let dateStr = '';
+    const dateTok = tokens.find(t=> dateRx.test(t));
+    if (dateTok) {
+      const [,d,mon] = dateTok.match(dateRx);
+      const mm = monthMap[mon.toLowerCase()];
+      dateStr = ` ${String(d).padStart(2,'0')}.${String(mm).padStart(2,'0')}.${currentYear}`;
+    }
+
+    // 3) времена вылета/прилёта
+    const times = tokens.filter(t=> timeRx.test(t));
+    if (times.length < 2) {
+      out.push(`⚠️ Не найдены два времени в блоке:\n${block}`);
+      continue;
+    }
+    const [depTime, arrTime] = times;
+
+    // 4) +N день
+    const ds = tokens.find(t=> dayShiftRx.test(t));
+    const dayShift = ds ? ` (+${ds.match(dayShiftRx)[1]})` : '';
+
+    // 5) статус: любая двухбуквенная строка, кроме кода авиакомпании
+    const rawStatus = tokens.find(t=>
+      statusRx.test(t)
+      && t !== airline      // не код авиакомпании
+      && !iataRx.test(t)    // не трёхбуквенный IATA
+    );
+    const status = rawStatus ? findStatus(tokens, airline) : '';
+
+    // 6) сбор сегмента: сначала ищем IATA-коды
+    const codes = tokens.filter(t=> iataRx.test(t) && airports[t]);
+    let segment;
+    if (codes.length >= 2) {
+      // короткий формат с кодами
+      const [depCode, arrCode] = codes;
+      const depCity = airports[depCode].city;
+      const arrCity = airports[arrCode].city;
+      segment = `${depCity} (${depCode}) ${depTime} — ${arrCity} (${arrCode}) ${arrTime}${dayShift}`;
+    } else {
+      // длинный формат с явными городами
+      const arrIdx = lines.findIndex(l=> timeRx.test(l) && l === arrTime);
+      const cityCands = [];
+      for (let i = arrIdx + 1; i < lines.length; i++) {
+        const l = lines[i].replace(/,$/, '');
+        if (/^в пути/i.test(l))      continue;
+        if (/^\+?\d+ч/i.test(l))     continue;
+        if (/^Airbus|^Boeing/i.test(l)) continue;
+        if (/^Аэрофлот/i.test(l))    continue;
+        cityCands.push(l);
+        if (cityCands.length === 2) break;
+      }
+      if (cityCands.length < 2) {
+        out.push(`⚠️ Не удалось выделить города в блоке:\n${block}`);
+        continue;
+      }
+      const [depCity, arrCity] = cityCands;
+      segment = `${depTime} ${depCity} — ${arrTime} ${arrCity}${dayShift}`;
+    }
+
+    // 7) финальный вывод с обязательным статусом
+    let line = `${airline}-${flight}${dateStr} ${segment}`;
+    if (status) line += ` — ${status}`;
+
+    out.push(line);
+  }
+
+  output.textContent = out.join('\n');
+}
+
+</script>
 </body>
 </html>
