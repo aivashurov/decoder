@@ -327,35 +327,49 @@ function decodeNDC(text) {
   const blocks = text.split(/\n{2,}/);
   const out = [];
 
-  // для преобразования “25 авг.” → “dd.MM.yyyy”
-  const monthMap = { 'янв':1,'фев':2,'мар':3,'апр':4,'май':5,'июн':6,'июл':7,'авг':8,'сен':9,'окт':10,'ноя':11,'дек':12 };
+  // маппинг русских мес. в числа
+  const monthMap = {
+    'янв':1, 'фев':2, 'мар':3, 'апр':4,
+    'май':5, 'июн':6, 'июл':7, 'авг':8,
+    'сен':9, 'окт':10,'ноя':11,'дек':12
+  };
   const currentYear = new Date().getFullYear();
 
-  // регэксы
-  const timeRx     = /^\d{2}:\d{2}$/;
-  const iataRx     = /^[A-Z]{3}$/;    // аэропорт
-  const statusRx   = /^[A-Z]{2}$/;    // статус
-  const dateRx     = /(\d{1,2})\s*([А-Яа-я]{3})\.?/;
-  const dayShiftRx = /\+(\d+)\s*дн/i;
+  // регулярки
+  const flightRx   = /^[A-Z]{2,3}[-\s]?\d+/i;        // первая строка: код+номер
+  const dateRx     = /(\d{1,2})\s+([А-Яа-я]{3})\.?/;  // "24 апр."
+  const timeRx     = /^\d{2}:\d{2}$/;                // "00:40"
+  const dayShiftRx = /\+(\d+)\s*дн/i;                // "+1 день"
+  const iataRx     = /^[A-Z]{3}$/;                   // "OVB"
+  const statusRx   = /^[A-Z]{2}$/;                   // "HK"
 
   for (const block of blocks) {
-    const lines  = block.trim().split(/\n/).map(l=>l.trim()).filter(Boolean);
-    const tokens = lines.flatMap(l=>l.split(/\s+/));
+    const lines = block
+      .trim()
+      .split(/\n/)
+      .map(l => l.trim())
+      .filter(Boolean);
 
-    // 1) номер рейса и код авиакомпании
+    // пропускаем любые «блоки» без рейса
+    if (!flightRx.test(lines[0])) continue;
+
+    // 1) номер рейса и авиакомпания
     const [airline, flight] = lines[0].split(/\s+/);
 
-    // 2) дата (если есть)
+    // 2) дата: ищем среди строк
     let dateStr = '';
-    const dateTok = tokens.find(t=> dateRx.test(t));
-    if (dateTok) {
-      const [,d,mon] = dateTok.match(dateRx);
+    const dateLine = lines.find(l => dateRx.test(l));
+    if (dateLine) {
+      const [, d, mon] = dateLine.match(dateRx);
       const mm = monthMap[mon.toLowerCase()];
       dateStr = ` ${String(d).padStart(2,'0')}.${String(mm).padStart(2,'0')}.${currentYear}`;
     }
 
+    // токены всего блока
+    const tokens = lines.flatMap(l => l.split(/\s+/));
+
     // 3) времена вылета/прилёта
-    const times = tokens.filter(t=> timeRx.test(t));
+    const times = tokens.filter(t => timeRx.test(t));
     if (times.length < 2) {
       out.push(`⚠️ Не найдены два времени в блоке:\n${block}`);
       continue;
@@ -363,32 +377,32 @@ function decodeNDC(text) {
     const [depTime, arrTime] = times;
 
     // 4) +N день
-    const ds = tokens.find(t=> dayShiftRx.test(t));
+    const ds = tokens.find(t => dayShiftRx.test(t));
     const dayShift = ds ? ` (+${ds.match(dayShiftRx)[1]})` : '';
 
-    // 5) статус: любая двухбуквенная строка, кроме кода авиакомпании
-    const rawStatus = tokens.find(t=>
+    // 5) статус
+    const rawStatus = tokens.find(t =>
       statusRx.test(t)
-      && t !== airline      // не код авиакомпании
-      && !iataRx.test(t)    // не трёхбуквенный IATA
+      && t.toUpperCase() !== airline.toUpperCase()
+      && !iataRx.test(t)
     );
     const status = rawStatus ? findStatus(tokens, airline) : '';
 
-    // 6) сбор сегмента: сначала ищем IATA-коды
-    const codes = tokens.filter(t=> iataRx.test(t) && airports[t]);
+    // 6) строим сегмент (короткий или длинный)
+    // 6a) короткий: два IATA-кода
+    const codes = tokens.filter(t => iataRx.test(t) && airports[t]);
     let segment;
     if (codes.length >= 2) {
-      // короткий формат с кодами
       const [depCode, arrCode] = codes;
-      const depCity = airports[depCode].city;
-      const arrCity = airports[arrCode].city;
-      segment = `${depCity} (${depCode}) ${depTime} — ${arrCity} (${arrCode}) ${arrTime}${dayShift}`;
+      segment = `${airports[depCode].city} (${depCode}) ${depTime}` +
+                ` — ${airports[arrCode].city} (${arrCode}) ${arrTime}${dayShift}`;
     } else {
-      // длинный формат с явными городами
-      const arrIdx = lines.findIndex(l=> timeRx.test(l) && l === arrTime);
+      // 6b) длинный: ищем первые две «городские» строки после arrTime
+      const arrIdx = lines.findIndex(l => timeRx.test(l) && l === arrTime);
       const cityCands = [];
       for (let i = arrIdx + 1; i < lines.length; i++) {
         const l = lines[i].replace(/,$/, '');
+        // пропускаем очевидное «мусорное»
         if (/^в пути/i.test(l))      continue;
         if (/^\+?\d+ч/i.test(l))     continue;
         if (/^Airbus|^Boeing/i.test(l)) continue;
@@ -404,10 +418,9 @@ function decodeNDC(text) {
       segment = `${depTime} ${depCity} — ${arrTime} ${arrCity}${dayShift}`;
     }
 
-    // 7) финальный вывод с обязательным статусом
+    // 7) собираем финальную строку
     let line = `${airline}-${flight}${dateStr} ${segment}`;
     if (status) line += ` — ${status}`;
-
     out.push(line);
   }
 
