@@ -7,13 +7,12 @@
     /* Общие стили */
     *, *::before, *::after { box-sizing: border-box; }
     body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 800px;
-    margin: auto;
-    /* убран фон светлой темы */
-    color: #333;
-}
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      color: #333;
+    }
     h2 { margin-top: 0; }
     textarea, pre, .refresh-info {
       width: 100%;
@@ -27,39 +26,25 @@
       color: #333;
     }
     textarea {
-      width: 100%;
       height: 150px;
       font-family: monospace;
-      font-size: 14px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 8px;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-      background: #fafafa;
       color: #000;
     }
     pre {
-      width: 100%;
-      background: #fafafa;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
       white-space: pre-wrap;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
       color: #000;
       margin-top: 10px;
     }
 
     /* Кнопки */
-    button { margin: 4px 2px; padding: 8px 16px; background: none; border: none; border-radius: 4px; color: inherit; font-size: 14px; cursor: pointer; transform: translateY(0); transition: background 0.2s, transform 0.1s; }
-    button:hover { background: rgba(0,0,0,0.05); transform: translateY(-2px); }
+    button { margin: 4px 2px; padding: 8px 16px; background: none; border: none; border-radius: 4px; color: inherit; font-size: 14px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+    button:hover { background: rgba(0,0,0,0.05); }
     button:active { transform: translateY(0); }
-    /* Выделение action-кнопок рамкой и тенью */
     .action-btn { border: 1px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .action-btn:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
     /* Блок обновления */
-    .refresh-info { background: #fff; padding: 16px; border-radius: 6px; margin-top: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); font-size: 14px; color: #333; }
     .refresh-info ul { margin: 8px 0 12px; padding-left: 20px; list-style: disc outside; }
     .refresh-info kbd { display: inline-block; background: #e9ecef; border: none; border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 13px; margin: 0 2px; }
     .refresh-info em { color: #555; font-style: italic; }
@@ -78,7 +63,6 @@
     body.dark-mode .refresh-info {
       background: #1e1e1e;
       color: #ddd;
-      box-shadow: none;
       border: 1px solid #444;
     }
     body.dark-mode .refresh-info kbd { background: #333; color: #eee; }
@@ -90,6 +74,7 @@
 </head>
 <body>
   <button id="theme-toggle" class="dark-toggle" onclick="toggleDarkMode()">🌙 Тёмная тема</button>
+
   <script>
     function toggleDarkMode() {
       document.body.classList.add('transition');
@@ -101,7 +86,8 @@
     }
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').textContent = '☀️ Светлая тема';
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-toggle').textContent = '☀️ Светлая тема';
       }
     });
   </script>
@@ -116,149 +102,210 @@
   <div class="refresh-info">
     <p><strong>Ошибка при расшифровке?</strong> Попробуй обновить страницу:</p>
     <ul>
-      <li><strong>Windows:</strong> обычное обновление — <kbd>Ctrl+R</kbd>; жёсткое — <kbd>Ctrl+F5</kbd> или <kbd>Ctrl+Shift+R</kbd>.</li>
-      <li><strong>macOS:</strong> обычное обновление — <kbd>⌘+R</kbd>; жёсткое — <kbd>⌘+Shift+R</kbd>.</li>
+      <li><strong>Windows:</strong> <kbd>Ctrl+R</kbd> / <kbd>Ctrl+F5</kbd></li>
+      <li><strong>macOS:</strong> <kbd>⌘+R</kbd> / <kbd>⌘+Shift+R</kbd></li>
     </ul>
-    <p><em>Комбинации работают в Chrome, Firefox, Edge и Safari.</em></p>
+    <p><em>Работает в Chrome, Firefox, Edge и Safari.</em></p>
   </div>
 
-<script>
-let airports = {}, aliasMap = {}, statuses = {};
+  <script>
+    let airports = {}, aliasMap = {}, statuses = {};
 
-function isCyrillic(s) { return /[А-ЯЁа-яё]/.test(s); }
-function transliterateCyrillic(s) {
-  const map = {
-    'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'YO','Ж':'ZH','З':'Z','И':'I','Й':'Y',
-    'К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F',
-    'Х':'X','Ц':'TS','Ч':'CH','Ш':'SH','Щ':'SHCH','Ы':'Y','Э':'E','Ю':'YU','Я':'YA'
-  };
-  return [...s].map(ch => map[ch]||ch).join('');
-}
-function normalizeToken(s) {
-  const up = s.toUpperCase();
-  return isCyrillic(up) ? transliterateCyrillic(up) : up;
-}
-
-function fetchCSV(url) {
-  return fetch(url)
-    .then(r => r.text())
-    .then(text => {
-      const [h, ...rows] = text.trim().split(/\r?\n/);
-      const keys = h.split(',');
-      return rows.map(r => { const vals = r.split(','); let obj={}; keys.forEach((k,i)=>obj[k.trim()]=vals[i]?.trim()||"" ); return obj; });
-    });
-}
-
-function init() {
-  Promise.all([
-    fetchCSV('https://raw.githubusercontent.com/aivashurov/decoder/main/airports_cleaned.csv?v='+Date.now()),
-    fetchCSV('https://raw.githubusercontent.com/aivashurov/decoder/main/statuses_cleaned.csv?v='+Date.now())
-  ]).then(([ad, sd]) => {
-    ad.forEach(a=>{ airports[a.code]={city:capitalize(a.city),iata:a.iata}; if(a.alias) a.alias.split(' ').filter(x=>x).forEach(al=>aliasMap[al.toUpperCase()]=a.code); });
-    sd.forEach(s=>statuses[s.code.toUpperCase()]=s.description);
-  }).catch(e=>document.getElementById('output').textContent='Ошибка загрузки: '+e);
-}
-
-function capitalize(s) { return s? s.split(/([ -])/).map(w=>/^[А-ЯЁA-Z]/i.test(w)?w[0].toUpperCase()+w.slice(1):w).join(''):''; }
-
-function matchRoute(tok){ for(let len=3;len<=4;len++){ const f=tok.slice(0,len), t=tok.slice(len); const from=airports[f]?f:aliasMap[f]||null; const to=airports[t]?t:aliasMap[t]||null; if(from&&to) return[from,to]; }return[null,null]; }
-
-function findAirports(tokens){ for(const t of tokens){ const letters=t.replace(/[^A-Za-zЀ-ӿ]/g,''); if(letters.length>=6&&letters.length<=8){ for(let i=3;i<=letters.length-3;i++){ const p1=letters.slice(0,i),p2=letters.slice(i); let from=isCyrillic(p1)?aliasMap[p1.toUpperCase()]:(airports[p1.toUpperCase()]?p1.toUpperCase():aliasMap[p1.toUpperCase()]); let to=isCyrillic(p2)?aliasMap[p2.toUpperCase()]:(airports[p2.toUpperCase()]?p2.toUpperCase():aliasMap[p2.toUpperCase()]); if(from&&to) return{from,to}; } } } for(let i=0;i<tokens.length-1;i++){ const a=tokens[i].replace(/[^A-Za-zЀ-ӿ]/g,''),b=tokens[i+1].replace(/[^A-Za-zЀ-ӿ]/g,''); if(!a||!b)continue; let from=isCyrillic(a)?aliasMap[a.toUpperCase()]:(airports[a.toUpperCase()]?a.toUpperCase():aliasMap[a.toUpperCase()]); let to=isCyrillic(b)?aliasMap[b.toUpperCase()]:(airports[b.toUpperCase()]?b.toUpperCase():aliasMap[b.toUpperCase()]); if(from&&to) return{from,to}; } return{}; }
-
-// Обновлённая функция findFlight
-function findFlight(tokens) {
-  for (const t of tokens) {
-    const raw = t.replace(/^-/, '');
-    const tok = normalizeToken(raw).replace(/[_ ]/g, '-');
-    // пропускаем статусы (кириллица/латиница) и чисто цифры
-    if (statuses[raw.toUpperCase()] || statuses[tok] || /^\d{3,4}$/.test(tok)) continue;
-    if (!/^[A-Z0-9-]+$/.test(tok)) continue;
-    const m = tok.match(/^([A-Z0-9]{2})-?(\d{1,4}[A-Z]?)$/i);
-    if (m && /[A-Z]/.test(m[1])) {
-      const airline = m[1].toUpperCase(), flight = m[2];
-      const parts = raw.split(/[- ]/);
-      return { airline, flight, rawAirline: parts[0], rawFlight: parts[1] || parts[0].slice(2) };
+    function isCyrillic(s) { return /[А-ЯЁа-яё]/.test(s); }
+    function transliterateCyrillic(s) {
+      const map = {
+        'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'YO','Ж':'ZH','З':'Z','И':'I','Й':'Y',
+        'К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F',
+        'Х':'X','Ц':'TS','Ч':'CH','Ш':'SH','Щ':'SHCH','Ы':'Y','Э':'E','Ю':'YU','Я':'YA'
+      };
+      return [...s].map(ch => map[ch]||ch).join('');
     }
-  }
-  for (let i = 0; i < tokens.length - 1; i++) {
-    const a = tokens[i].replace(/^-/, ''), b = tokens[i+1].replace(/^-/, '');
-    const an = normalizeToken(a), bn = normalizeToken(b);
-    if (!/^[A-Z0-9]{2}$/.test(an) || !/[A-Z]/.test(an) || !/^[0-9]{1,4}[A-Z]?$/.test(bn)) continue;
-    return { airline: an, flight: bn, rawAirline: a, rawFlight: b };
-  }
-  return {};
-}
-
-function findDate(tokens) {
-  const M = { "ЯНВ":"01","ФЕВ":"02","МАР":"03","АПР":"04","МАЙ":"05","ИЮН":"06","ИЮЛ":"07","АВГ":"08","СЕН":"09","ОКТ":"10","НОЯ":"11","ДЕК":"12",
-              "JAN":"01","FEB":"02","MAR":"03","APR":"04","MAY":"05","JUN":"06","JUL":"07","AUG":"08","SEP":"09","OCT":"10","NOV":"11","DEC":"12" };
-  for (const t of tokens) {
-    const u = t.toUpperCase().replace(/[.,]/g, '');
-    const m = u.match(/^(\d{2})([A-ZА-ЯЁ]{3})(\d{2})?$/);
-    if (m) {
-      const [d, mo, yy] = [m[1], m[2], m[3]];
-      return { raw: u, formatted: `${d}.${M[mo] || '??'}.${yy ? '20' + yy : '2025'}` };
+    function normalizeToken(s) {
+      const up = s.toUpperCase();
+      return isCyrillic(up) ? transliterateCyrillic(up) : up;
     }
-  }
-  return null;
-}
 
-function findStatus(tokens) {
-  for (const t of tokens) {
-    if (statuses[t.toUpperCase()]) return statuses[t.toUpperCase()];
-  }
-  return '';
-}
-
-function findTimes(tokens, dt) {
-  const year = dt ? dt.formatted.split('.')[2] : '';
-  const rawTimes = tokens
-    .map(t => t.match(/^(\d{4})$/))
-    .filter(m => m)
-    .map(m => m[1]);
-  const filtered = rawTimes.filter(t => t !== year);
-  let times;
-  if (rawTimes.length >= 2) {
-    times = filtered.length >= 2 ? filtered : rawTimes;
-  } else {
-    times = filtered;
-  }
-  if (times.length >= 2) {
-    return {
-      dep: times[times.length-2].slice(0,2) + ':' + times[times.length-2].slice(2),
-      arr: times[times.length-1].slice(0,2) + ':' + times[times.length-1].slice(2)
-    };
-  } else if (times.length === 1) {
-    return { dep: times[0].slice(0,2) + ':' + times[0].slice(2) };
-  }
-  return {};
-}
-
-function decode() {
-  const lines = preprocessGDS(input.value.trim()).split(/\n+/), out=[];
-  for (const line of lines) {
-    const tokens = line.trim().split(/\s+/).filter(x => x && !/^[.,*]$/.test(x));
-    const fl = findFlight(tokens), dt = findDate(tokens), tm = findTimes(tokens, dt), ap = findAirports(tokens), st = findStatus(tokens);
-    if (fl.airline && fl.flight && ap.from && ap.to && tm.dep) {
-      const A = airports[ap.from], B = airports[ap.to];
-      let r = `${fl.rawAirline}-${fl.rawFlight}`;
-      if (dt) r += ` ${dt.formatted}`;
-      r += dt ? ', ' : ' ';
-      if (tm.arr) r += `${A.city} ${A.iata} ${tm.dep} — ${B.city} ${B.iata} ${tm.arr}`; else r += `${A.city} ${A.iata} ${tm.dep} — ${B.city} ${B.iata}`;
-      if (st) r += ` — ${st}`;
-      out.push(r);
-    } else {
-      out.push(`⚠️ Не удалось распознать строку: ${line}`);
+    function fetchCSV(url) {
+      return fetch(url)
+        .then(r => r.text())
+        .then(text => {
+          const [h, ...rows] = text.trim().split(/\r?\n/);
+          const keys = h.split(',');
+          return rows.map(r => {
+            const vals = r.split(',');
+            let obj = {};
+            keys.forEach((k, i) => obj[k.trim()] = vals[i]?.trim() || "");
+            return obj;
+          });
+        });
     }
-  }
-  output.textContent = out.join('\n');
-}
 
-function preprocessGDS(l) { return l.replace(/[.,#]/g, '').replace(/\s+O\*/g, '').replace(/\s+E\b/g, '').replace(/\b([A-Z0-9]{2})(\d{3,4}[A-Z]?)\b/g, '$1-$2'); }
-function copyResult() { navigator.clipboard.writeText(output.textContent); }
-function clearAll() { input.value = ''; output.textContent = ''; }
+    function init() {
+      Promise.all([
+        fetchCSV('https://raw.githubusercontent.com/aivashurov/decoder/main/airports_cleaned.csv?v='+Date.now()),
+        fetchCSV('https://raw.githubusercontent.com/aivashurov/decoder/main/statuses_cleaned.csv?v='+Date.now())
+      ]).then(([ad, sd]) => {
+        ad.forEach(a => {
+          airports[a.code] = { city: capitalize(a.city), iata: a.iata };
+          if (a.alias) {
+            a.alias.split(' ').filter(x => x).forEach(al => aliasMap[al.toUpperCase()] = a.code);
+          }
+        });
+        sd.forEach(s => statuses[s.code.toUpperCase()] = s.description);
+      }).catch(e => document.getElementById('output').textContent = 'Ошибка загрузки: ' + e);
+    }
 
-init();
-</script>
+    function capitalize(s) {
+      return s ? s.split(/([ -])/).map(w => /^[А-ЯЁA-Z]/i.test(w) ? w[0].toUpperCase() + w.slice(1) : w).join('') : '';
+    }
+
+    function matchRoute(tok) {
+      for (let len = 3; len <= 4; len++) {
+        const f = tok.slice(0, len), t = tok.slice(len);
+        const from = airports[f] ? f : aliasMap[f] || null;
+        const to   = airports[t] ? t : aliasMap[t] || null;
+        if (from && to) return [from, to];
+      }
+      return [null, null];
+    }
+
+    function findAirports(tokens) {
+      // сначала слитные TOKENS (6–8 букв), потом пары
+      for (const t of tokens) {
+        const letters = t.replace(/[^A-Za-zЀ-ӿ]/g, '');
+        if (letters.length >= 6 && letters.length <= 8) {
+          for (let i = 3; i <= letters.length - 3; i++) {
+            const p1 = letters.slice(0, i), p2 = letters.slice(i);
+            let from = isCyrillic(p1) ? aliasMap[p1.toUpperCase()] : (airports[p1.toUpperCase()] ? p1.toUpperCase() : aliasMap[p1.toUpperCase()]);
+            let to   = isCyrillic(p2) ? aliasMap[p2.toUpperCase()] : (airports[p2.toUpperCase()] ? p2.toUpperCase() : aliasMap[p2.toUpperCase()]);
+            if (from && to) return { from, to };
+          }
+        }
+      }
+      for (let i = 0; i < tokens.length - 1; i++) {
+        const a = tokens[i].replace(/[^A-Za-zЀ-ӿ]/g,''), b = tokens[i+1].replace(/[^A-Za-zЀ-ӿ]/g,'');
+        if (!a || !b) continue;
+        let from = isCyrillic(a) ? aliasMap[a.toUpperCase()] : (airports[a.toUpperCase()] ? a.toUpperCase() : aliasMap[a.toUpperCase()]);
+        let to   = isCyrillic(b) ? aliasMap[b.toUpperCase()] : (airports[b.toUpperCase()] ? b.toUpperCase() : aliasMap[b.toUpperCase()]);
+        if (from && to) return { from, to };
+      }
+      return {};
+    }
+
+    // обновлённая findFlight
+    function findFlight(tokens) {
+      for (const t of tokens) {
+        const raw = t.replace(/^-/, '');
+        const tok = normalizeToken(raw).replace(/[_ ]/g, '-');
+        // пропускаем явные статусы и чисто цифры
+        if (statuses[raw.toUpperCase()] || statuses[tok] || /^\d{3,4}$/.test(tok)) continue;
+        if (!/^[A-Z0-9-]+$/.test(tok)) continue;
+        const m = tok.match(/^([A-Z0-9]{2})-?(\d{1,4}[A-Z]?)$/i);
+        if (m && /[A-Z]/.test(m[1])) {
+          const airline = m[1].toUpperCase(), flight = m[2];
+          const parts = raw.split(/[- ]/);
+          return { airline, flight, rawAirline: parts[0], rawFlight: parts[1] || parts[0].slice(2) };
+        }
+      }
+      // если слитного не нашли — два соседних токена
+      for (let i = 0; i < tokens.length - 1; i++) {
+        const a = tokens[i].replace(/^-/, ''), b = tokens[i+1].replace(/^-/, '');
+        const an = normalizeToken(a), bn = normalizeToken(b);
+        if (!/^[A-Z0-9]{2}$/.test(an) || !/[A-Z]/.test(an) || !/^[0-9]{1,4}[A-Z]?$/.test(bn)) continue;
+        return { airline: an, flight: bn, rawAirline: a, rawFlight: b };
+      }
+      return {};
+    }
+
+    function findDate(tokens) {
+      const M = {
+        "ЯНВ":"01","ФЕВ":"02","МАР":"03","АПР":"04","МАЙ":"05","ИЮН":"06","ИЮЛ":"07","АВГ":"08","СЕН":"09","ОКТ":"10","НОЯ":"11","ДЕК":"12",
+        "JAN":"01","FEB":"02","MAR":"03","APR":"04","MAY":"05","JUN":"06","JUL":"07","AUG":"08","SEP":"09","OCT":"10","NOV":"11","DEC":"12"
+      };
+      for (const t of tokens) {
+        const u = t.toUpperCase().replace(/[.,]/g, '');
+        const m = u.match(/^(\d{2})([A-ZА-ЯЁ]{3})(\d{2})?$/);
+        if (m) {
+          const [d, mo, yy] = [m[1], m[2], m[3]];
+          return { raw: u, formatted: `${d}.${M[mo]||'??'}.${yy? '20'+yy : '2025'}` };
+        }
+      }
+      return null;
+    }
+
+    // обновлённая findStatus
+    function findStatus(tokens, airlineCode) {
+      const norm = tokens
+        .map(t => t.toUpperCase().replace(/[_\s-]/g, ''))
+        .filter(code => code !== airlineCode && statuses[code])
+        .filter(code => /\d/.test(code));
+      if (!norm.length) return '';
+      norm.sort((a, b) => b.length - a.length);
+      return statuses[norm[0]];
+    }
+
+    function findTimes(tokens, dt) {
+      const year = dt ? dt.formatted.split('.')[2] : '';
+      const rawTimes = tokens
+        .map(t => t.match(/^(\d{4})$/))
+        .filter(m => m)
+        .map(m => m[1]);
+      const filtered = rawTimes.filter(t => t !== year);
+      let times = rawTimes.length >= 2
+        ? (filtered.length >= 2 ? filtered : rawTimes)
+        : filtered;
+      if (times.length >= 2) {
+        return {
+          dep: times[times.length-2].slice(0,2) + ':' + times[times.length-2].slice(2),
+          arr: times[times.length-1].slice(0,2) + ':' + times[times.length-1].slice(2)
+        };
+      } else if (times.length === 1) {
+        return { dep: times[0].slice(0,2) + ':' + times[0].slice(2) };
+      }
+      return {};
+    }
+
+    function decode() {
+      const lines = preprocessGDS(input.value.trim()).split(/\n+/);
+      const out = [];
+      for (const line of lines) {
+        const tokens = line.trim().split(/\s+/).filter(x => x && !/^[.,*]$/.test(x));
+        const fl = findFlight(tokens);
+        const dt = findDate(tokens);
+        const tm = findTimes(tokens, dt);
+        const ap = findAirports(tokens);
+        const st = findStatus(tokens, fl.airline);
+
+        if (fl.airline && fl.flight && ap.from && ap.to && tm.dep) {
+          const A = airports[ap.from], B = airports[ap.to];
+          let r = `${fl.rawAirline}-${fl.rawFlight}`;
+          if (dt) r += ` ${dt.formatted}`;
+          r += dt ? ', ' : ' ';
+          r += tm.arr
+            ? `${A.city} ${A.iata} ${tm.dep} — ${B.city} ${B.iata} ${tm.arr}`
+            : `${A.city} ${A.iata} ${tm.dep} — ${B.city} ${B.iata}`;
+          if (st) r += ` — ${st}`;
+          out.push(r);
+        } else {
+          out.push(`⚠️ Не удалось распознать строку: ${line}`);
+        }
+      }
+      output.textContent = out.join('\n');
+    }
+
+    function preprocessGDS(l) {
+      return l
+        .replace(/[.,#]/g, '')
+        .replace(/\s+O\*/g, '')
+        .replace(/\s+E\b/g, '')
+        .replace(/\b([A-Z0-9]{2})(\d{3,4}[A-Z]?)\b/g, '$1-$2');
+    }
+
+    function copyResult() { navigator.clipboard.writeText(output.textContent); }
+    function clearAll()    { input.value = ''; output.textContent = ''; }
+
+    // инициализируем данные
+    init();
+  </script>
 </body>
 </html>
