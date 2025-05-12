@@ -247,25 +247,33 @@ function findStatus(tokens, airlineCode) {
 
 
     function findTimes(tokens, dt) {
-      const year = dt ? dt.formatted.split('.')[2] : '';
-      const rawTimes = tokens
-        .map(t => t.match(/^(\d{4})$/))
-        .filter(m => m)
-        .map(m => m[1]);
-      const filtered = rawTimes.filter(t => t !== year);
-      let times = rawTimes.length >= 2
-        ? (filtered.length >= 2 ? filtered : rawTimes)
-        : filtered;
-      if (times.length >= 2) {
-        return {
-          dep: times[times.length-2].slice(0,2) + ':' + times[times.length-2].slice(2),
-          arr: times[times.length-1].slice(0,2) + ':' + times[times.length-1].slice(2)
-        };
-      } else if (times.length === 1) {
-        return { dep: times[0].slice(0,2) + ':' + times[0].slice(2) };
-      }
-      return {};
-    }
+  const year = dt ? dt.formatted.split('.')[2] : '';
+  
+  // Исправленный регэксп для поиска времени (3 или 4 цифры)
+  const rawTimes = tokens
+    .map(t => t.match(/^(\d{3,4})$/))
+    .filter(m => m)
+    .map(m => m[1])
+    .map(t => t.padStart(4, '0')); // ← дополнение нулями слева до 4-х цифр
+  
+  const filtered = rawTimes.filter(t => t !== year);
+  
+  let times = rawTimes.length >= 2
+    ? (filtered.length >= 2 ? filtered : rawTimes)
+    : filtered;
+    
+  if (times.length >= 2) {
+    return {
+      dep: times[times.length - 2].slice(0, 2) + ':' + times[times.length - 2].slice(2),
+      arr: times[times.length - 1].slice(0, 2) + ':' + times[times.length - 1].slice(2)
+    };
+  } else if (times.length === 1) {
+    return {
+      dep: times[0].slice(0, 2) + ':' + times[0].slice(2)
+    };
+  }
+  return {};
+}
 
     function decode() {
       const lines = preprocessGDS(input.value.trim()).split(/\n+/);
