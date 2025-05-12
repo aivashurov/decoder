@@ -196,28 +196,26 @@
 
     // обновлённая findFlight
     function findFlight(tokens) {
-      for (const t of tokens) {
-        const raw = t.replace(/^-/, '');
-        const tok = normalizeToken(raw).replace(/[_ ]/g, '-');
-        // пропускаем явные статусы и чисто цифры
-        if (statuses[raw.toUpperCase()] || statuses[tok] || /^\d{3,4}$/.test(tok)) continue;
-        if (!/^[A-Z0-9-]+$/.test(tok)) continue;
-        const m = tok.match(/^([A-Z0-9]{2})-?(\d{1,4}[A-Z]?)$/i);
-        if (m && /[A-Z]/.test(m[1])) {
-          const airline = m[1].toUpperCase(), flight = m[2];
-          const parts = raw.split(/[- ]/);
-          return { airline, flight, rawAirline: parts[0], rawFlight: parts[1] || parts[0].slice(2) };
-        }
-      }
-      // если слитного не нашли — два соседних токена
-      for (let i = 0; i < tokens.length - 1; i++) {
-        const a = tokens[i].replace(/^-/, ''), b = tokens[i+1].replace(/^-/, '');
-        const an = normalizeToken(a), bn = normalizeToken(b);
-        if (!/^[A-Z0-9]{2}$/.test(an) || !/[A-Z]/.test(an) || !/^[0-9]{1,4}[A-Z]?$/.test(bn)) continue;
-        return { airline: an, flight: bn, rawAirline: a, rawFlight: b };
-      }
-      return {};
+  for (const t of tokens) {
+    const raw = t.replace(/^-/, '');
+    const tok = normalizeToken(raw).replace(/[_ ]/g, '-');
+    if (statuses[raw.toUpperCase()] || statuses[tok] || /^\d{3,4}$/.test(tok)) continue;
+    if (!/^[A-ZА-ЯЁ0-9-]+$/i.test(tok)) continue;
+    const m = tok.match(/^([A-ZА-ЯЁ0-9]{2,3})-?(\d{1,4}[A-ZА-ЯЁ]?)$/i);
+    if (m && /[A-ZА-ЯЁ]/i.test(m[1])) {
+      const airline = m[1].toUpperCase(), flight = m[2];
+      const parts = raw.split(/[- ]/);
+      return { airline, flight, rawAirline: parts[0], rawFlight: parts[1] || parts[0].slice(m[1].length) };
     }
+  }
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const a = tokens[i].replace(/^-/, ''), b = tokens[i+1].replace(/^-/, '');
+    const an = normalizeToken(a), bn = normalizeToken(b);
+    if (!/^[A-ZА-ЯЁ0-9]{2,3}$/i.test(an) || !/[A-ZА-ЯЁ]/i.test(an) || !/^[0-9]{1,4}[A-ZА-ЯЁ]?$/i.test(bn)) continue;
+    return { airline: an, flight: bn, rawAirline: a, rawFlight: b };
+  }
+  return {};
+}
 
     function findDate(tokens) {
       const M = {
