@@ -306,14 +306,12 @@ decode = function() {
   originalDecode();
 };
 
-// ==== Улучшенный NDC-декодер ====
 function decodeNDC(text) {
   const rawLines = text
     .split('\n')
     .map(l => l.trim())
     .filter(Boolean);
 
-  // Найти все строки-кандидаты на дату (сохраняем их с индексом строки)
   function extractDateCandidates(lines) {
     const datePatterns = [
       /^(\d{1,2})\s+([А-Яа-яё]+)\.?$/,                // 21 сент.
@@ -331,7 +329,6 @@ function decodeNDC(text) {
     return candidates;
   }
 
-  // Группируем строки в блоки по рейсам
   const flightRx = /^[A-Z0-9]{2,3}[-\s]?\d+/i;
   const blocks = [];
   let current = null;
@@ -360,13 +357,9 @@ function decodeNDC(text) {
   const statusRx   = /^[A-Z]{2}$/;
   const dayShiftRx = /\+(\d+)\s*дн/i;
 
-  // Новый этап: собрать массив "сиротских" дат вне блоков
   const dateCandidatesGlobal = extractDateCandidates(rawLines);
 
-  // Для блоков, где дата стоит выше (например, "30 Мая" перед S7 2616),
-  // будем искать ближайшую предыдущую дату
   function getNearestDate(idxInRawLines) {
-    // найти в dateCandidatesGlobal ту, что <= idxInRawLines
     let nearest = null;
     for (const d of dateCandidatesGlobal) {
       if (d.idx < idxInRawLines) nearest = d;
@@ -378,17 +371,26 @@ function decodeNDC(text) {
   const outputLines = [];
 
   for (const lines of blocks) {
-    // Определяем индекс первой строки блока в rawLines
     const firstLine = lines[0];
     const blockFirstIdx = rawLines.indexOf(firstLine);
 
-    // 1) рейс
-    const [airline, flight] = lines[0].split(/\s+/);
+    // --- ИСПРАВЛЕНО: корректный парсер номера рейса ---
+    let airline = '', flight = '';
+    {
+      // Поддержка форматов: "A4 4039", "A4-4039", "A44039"
+      const flightHeader = lines[0];
+      const match = flightHeader.match(/^([A-Z0-9]{2,3})[-\s]?(\d+)/i);
+      if (match) {
+        airline = match[1];
+        flight = match[2];
+      } else {
+        const parts = flightHeader.split(/\s+/);
+        airline = parts[0] || '';
+        flight = parts[1] || '';
+      }
+    }
 
-    // токены для поиска времени, кодов, статуса, dayShift
     const tokens = lines.flatMap(l => l.split(/\s+/));
-
-    // 2) вылет/прилёт
     const times = tokens.filter(t => /^\d{2}:\d{2}$/.test(t));
     if (times.length < 2) {
       outputLines.push(`⚠️ Не найдены два времени в блоке:\n${lines.join('\n')}`);
@@ -396,11 +398,9 @@ function decodeNDC(text) {
     }
     const [depTime, arrTime] = times;
 
-    // 3) +N день
     const ds = tokens.find(t => dayShiftRx.test(t));
     const dayShift = ds ? ` (+${ds.match(dayShiftRx)[1]})` : '';
 
-    // 4) статус
     const rawStatus = tokens.find(t =>
       statusRx.test(t) &&
       t.toUpperCase() !== airline.toUpperCase() &&
@@ -408,18 +408,12 @@ function decodeNDC(text) {
     );
     const status = rawStatus ? findStatus(tokens, airline) : '';
 
-    // 5) короткий vs длинный формат
     const codes = tokens.filter(t => iataRx.test(t) && airports[t]);
     let dateStr = '';
     let segment;
 
-    // Новый алгоритм: ищем дату в самом блоке
     const dateCandidatesBlock = extractDateCandidates(lines);
-
-    // Если внутри блока есть дата — приоритет ей
     let dateMatch = dateCandidatesBlock.length ? dateCandidatesBlock[0].m : null;
-
-    // Если нет — ищем "сверху" ближайшую дату до блока
     if (!dateMatch) {
       const nearestDate = getNearestDate(blockFirstIdx);
       if (nearestDate) dateMatch = nearestDate.m;
@@ -427,14 +421,12 @@ function decodeNDC(text) {
 
     if (dateMatch) {
       if (dateMatch.length === 3) {
-        // "21 сент.", "30 Мая"
         const [_, d, monRaw] = dateMatch;
         const mm = monthMap[monRaw.toLowerCase()];
         dateStr = mm
           ? ` ${String(d).padStart(2,'0')}.${String(mm).padStart(2,'0')}.${currentYear}`
           : '';
       } else if (dateMatch.length === 4) {
-        // "02.06.2025"
         const [_, d, m, y] = dateMatch;
         const year = y.length === 2 ? '20' + y : y;
         dateStr = ` ${d}.${m}.${year}`;
@@ -442,19 +434,16 @@ function decodeNDC(text) {
     }
 
     if (codes.length >= 2) {
-      // короткий формат: IATA
       const [depCode, arrCode] = codes;
       segment = `${airports[depCode].city} (${depCode}) ${depTime}` +
                 ` — ${airports[arrCode].city} (${arrCode}) ${arrTime}${dayShift}`;
     } else {
-      // длинный формат: ищем строку прилёта (начало с arrTime)
       const arrIdx = lines.findIndex(l => l.startsWith(arrTime));
       if (arrIdx < 0) {
         outputLines.push(`⚠️ Не удалось найти строку прилёта в блоке:\n${lines.join('\n')}`);
         continue;
       }
 
-      // первые две «городские» строки после arrIdx
       const cities = [];
       for (let i = arrIdx + 1; i < lines.length; i++) {
         const L = lines[i].replace(/,$/, '');
