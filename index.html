@@ -205,17 +205,42 @@
       return {};
     }
 
+    // --- NEW: умное определение года, если его нет в строке ---
+    function inferYearIfMissing(day, month) {
+      const today = new Date();
+      const y = today.getFullYear();
+      const cand = new Date(y, month - 1, day);
+      cand.setHours(0,0,0,0);
+      const t0 = new Date(today);
+      t0.setHours(0,0,0,0);
+      return cand < t0 ? y + 1 : y;
+    }
+
     function findDate(tokens) {
       const M = {
         "ЯНВ":"01","ФЕВ":"02","МАР":"03","АПР":"04","МАЙ":"05","ИЮН":"06","ИЮЛ":"07","АВГ":"08","СЕН":"09","ОКТ":"10","НОЯ":"11","ДЕК":"12",
+        "НОЯБ":"11", /* NEW: поддержка "нояб." */
         "JAN":"01","FEB":"02","MAR":"03","APR":"04","MAY":"05","JUN":"06","JUL":"07","AUG":"08","SEP":"09","OCT":"10","NOV":"11","DEC":"12"
       };
       for (const t of tokens) {
         const u = t.toUpperCase().replace(/[.,]/g, '');
-        const m = u.match(/^(\d{2})([A-ZА-ЯЁ]{3})(\d{2})?$/);
+        const m = u.match(/^(\d{2})([A-ZА-ЯЁ]{3,4})(\d{2})?$/);  // NEW: 3-4 буквы месяца
         if (m) {
-          const [d, mo, yy] = [m[1], m[2], m[3]];
-          return { raw: u, formatted: `${d}.${M[mo]||'??'}.${yy? '20'+yy : '2025'}` };
+          const [d, moRaw, yy] = [m[1], m[2], m[3]];
+          let mo = moRaw;
+          if (mo.length === 4 && !M[mo]) mo = mo.slice(0,3); // NEW: "НОЯБ" -> "НОЯ"
+          const mm = M[mo] || '??';
+
+          let year;
+          if (yy) {
+            year = '20' + yy;
+          } else if (mm !== '??') {
+            year = String(inferYearIfMissing(parseInt(d,10), parseInt(mm,10))); // NEW
+          } else {
+            year = String(new Date().getFullYear());
+          }
+
+          return { raw: u, formatted: `${d}.${mm}.${year}` };
         }
       }
       return null;
@@ -376,9 +401,9 @@ function decodeNDC(text) {
     'июл':7,'июля':7, 'авг':8,'августа':8,
     'сен':9,'сентября':9,'сент':9,
     'окт':10,'октября':10,
-    'ноя':11,'ноября':11,'дек':12,'декабря':12
+    'ноя':11,'ноября':11,'нояб':11, /* NEW: поддержка "нояб." */
+    'дек':12,'декабря':12
   };
-  const currentYear = new Date().getFullYear();
 
   const iataRx     = /^[A-Z]{3}$/;
   const statusRx   = /^[A-Z]{2}$/;
@@ -447,10 +472,16 @@ function decodeNDC(text) {
     if (dateMatch) {
       if (dateMatch.length === 3) {
         const [_, d, monRaw] = dateMatch;
-        const mm = monthMap[monRaw.toLowerCase()];
-        dateStr = mm
-          ? ` ${String(d).padStart(2,'0')}.${String(mm).padStart(2,'0')}.${currentYear}`
-          : '';
+        const mmNum = monthMap[monRaw.toLowerCase()];
+
+        if (mmNum) {
+          const dd = String(d).padStart(2,'0');
+          const mm = String(mmNum).padStart(2,'0');
+          const yy = inferYearIfMissing(parseInt(dd,10), mmNum); // NEW
+          dateStr = ` ${dd}.${mm}.${yy}`; // NEW
+        } else {
+          dateStr = '';
+        }
       } else if (dateMatch.length === 4) {
         const [_, d, m, y] = dateMatch;
         const year = y.length === 2 ? '20' + y : y;
